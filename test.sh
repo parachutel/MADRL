@@ -1,3 +1,4 @@
+export PYTHONPATH=$(pwd):$(pwd)/rltools:$(pwd)/rllab:$PYTHONPATH
 python3 runners/run_multiwalker.py rllab \
     --control decentralized \
     --policy_hidden 100,50,25 \
