@@ -2,6 +2,7 @@ import copy
 import math
 from math import pi
 import sys
+import matplotlib.pyplot as plt
 
 import gym
 import numpy as np
@@ -24,6 +25,7 @@ DEST_THRESHOLD = 100 # in m
 SENSING_RANGE = 1000 # in m
 SENSOR_CAPACITY = 4
 NMAC_RANGE = 150 # in s
+TERM_PAIRWISE_OBS = [1] * 4
 
 # Agent continuous dynamics properties
 ACTION_IND_V = 0
@@ -54,6 +56,30 @@ AIRSPACE_WIDTH = 10000 # in m
 # wrap an angle in (- pi, pi] 
 def norm_angle(angle):
     return (angle + pi) % (2 * pi) - pi
+
+# Agents sorting helper
+def agent_dist(a, b):
+    return np.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
+
+def closer(a, b, ref):
+    return True if agent_dist(a, ref) <= agent_dist(b, ref) else False
+
+def partition(arr, low, high): 
+    i = low - 1
+    pivot = arr[high]
+    for j in range(low, high): 
+        if closer(arr[j], pivot, ref):
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i] 
+    arr[i+1], arr[high] = arr[high], arr[i+1] 
+    return i + 1
+
+def sort_agents(ref, arr, low, high): 
+    if low < high:
+        parti = partition(ref, arr, low, high) 
+        sort_agents(ref, arr, low, parti - 1) 
+        sort_agents(ref, arr, parti + 1, high) 
+
 
 class Aircraft(Agent): 
 
@@ -95,7 +121,7 @@ class Aircraft(Agent):
             self.turn_rate / MAX_TURN_RATE, # [-1, 1]
             self.dist_to_dest / self.init_dist_to_dest # [0, 1],
             norm_angle(math.atan2(self.dest_y - self.y, self.dest_x - self.x) 
-                - self.heading) / pi, # [-1, 1], Angle of destination wrt agent 
+                - self.heading) / pi # [-1, 1], Angle of destination wrt agent 
         ] + [1] * 4 * self.env.sensor_capacity
 
         # obs from intruders [dist, angle_wrt_heading, heading_diff, v_int]
@@ -112,13 +138,48 @@ class Aircraft(Agent):
         self.prev_dist_to_dest = self.dist_to_dest
         self.dist_to_dest = np.sqrt((self.dest_y - self.y)**2 + (self.dest_x - self.x)**2)
 
+    def get_pairwise_obs(self, intruder):
+        intruder_pos_angle = math.atan2(intruder.y - self.y, intruder.x - self.x)
+        obs = [
+            agent_dist(self, agent) / SENSING_RANGE,
+            norm_angle(intruder_pos_angle - self.heading) / pi, 
+            norm_angle(intruder.heading - self.heading) / pi, 
+            agent.v / MAX_V
+        ]
+        return obs
+
     def get_observation(self):
-        # Update and return self.obs
+        # Update own velocity and goal info
+        self.obs = [
+            self.v / MAX_V, # [0, 1]
+            self.turn_rate / MAX_TURN_RATE, # [-1, 1]
+            self.dist_to_dest / self.init_dist_to_dest # [0, 1],
+            norm_angle(math.atan2(self.dest_y - self.y, self.dest_x - self.x) 
+                - self.heading) / pi # [-1, 1], Angle of destination wrt agent 
+        ]
+
+        # Construct intruders list
+        intruders = []
+        for agent in self.env.agents:
+            if agent_dist(self, agent) > 0 and agent_dist(self, agent) <= SENSING_RANGE:
+                intruders.append(agent)
+
         if self.env.sensor_mode == 'sector':
             pass # TODO
         elif self.env.sensor_mode == 'closest':
+            if len(intruders) > 0 
+                # Ascending order in terms of distance from ownship
+                sort_agents(self, intruders, 0, len(intruders) - 1) 
+                for i in range(self.env.sensor_capacity):
+                    if i < len(intruders):
+                        self.obs += self.get_pairwise_obs(intruders[i])
+                    else
+                        self.obs += TERM_PAIRWISE_OBS
+            else: # no intruder
+                self.obs += TERM_PAIRWISE_OBS * self.env.sensor_capacity
 
-            return self.obs
+        assert len(self.obs) == 4 + 4 * self.env.sensor_capacity
+        return self.obs
 
     def nmac(self):
         intruder_dist_ind = [4 * (i + 1) for i in range(self.env.sensor_capacity)]
@@ -134,10 +195,8 @@ class Aircraft(Agent):
             reward += self.env.rew_arrival
         else:
             reward += self.env.rew_closing * (self.prev_dist_to_dest - self.dist_to_dest)
-
         if self.nmac():
             reward += self.env.rew_nmac
-
         if np.abs(self.turn_rate) > 0.7 * MAX_TURN_RATE
             reward += self.env.rew_large_turnrate * np.abs(self.turn_rate)
 
@@ -163,6 +222,10 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
                  sensor_mode='closest',
                  sensor_capacity=SENSOR_CAPACITY,
                  max_time_steps=MAX_TIME_STEPS,
+                 speed_noise=1e-3,
+                 turn_rate_noise=1e-3,
+                 position_noise=1e-3, 
+                 angle_noise=1e-3, 
                  rew_arrival=15,
                  rew_closing=2.5,
                  rew_nmac=-15,
@@ -191,11 +254,11 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         return self.__dict__
 
     def reset(self):
+        training_mode = random.choice(TRAINING_SCENARIOS)
         if training_mode == 'circle':
             self.circle_radius = random.choice(range(MIN_CIRCLE_RADIUS, MAX_CIRCLE_RADIUS))
-        elif training_mode == 'annulus':
-
         elif training_mode == 'square':
+            pass
 
     def agents_control(self):
         pass
