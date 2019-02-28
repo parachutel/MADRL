@@ -20,7 +20,7 @@ from rltools.util import EzPickle
 MIN_AGENTS = 10
 MAX_AGENTS = 60
 
-DEST_THRESHOLD = 100 # in m
+DEST_THRESHOLD = 50 # in m
 
 # Sensor model parameters
 SENSING_RANGE = 1000 # in m
@@ -87,6 +87,7 @@ def sort_agents(ref, arr, low, high):
 class Aircraft(Agent): 
 
     def __init__(self, env):
+        self._seed()
         self.env = env
         self.v = MIN_V
         self.turn_rate = 0
@@ -131,6 +132,10 @@ class Aircraft(Agent):
 
         assert len(self.obs) == 4 + 4 * self.env.sensor_capacity
 
+    def _seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
+
     def apply_action(self, action):
         # Entries of action vector in [-1, 1]
         self.v = np.clip(self.v + MAX_ACC * action[ACTION_IND_ACC] * DT, MIN_V, MAX_V) 
@@ -145,15 +150,16 @@ class Aircraft(Agent):
     def get_pairwise_obs(self, intruder):
         intruder_pos_angle = math.atan2(intruder.y - self.y, intruder.x - self.x)
         obs = [
-            agent_dist(self, intruder) / SENSING_RANGE,
-            norm_angle(intruder_pos_angle - self.heading) / pi, 
-            norm_angle(intruder.heading - self.heading) / pi, 
-            intruder.v / MAX_V
+            np.random.normal(agent_dist(self, intruder) / SENSING_RANGE, self.env.position_noise),
+            np.random.normal(norm_angle(intruder_pos_angle - self.heading) / pi, self.env.angle_noise), 
+            np.random.normal(norm_angle(intruder.heading - self.heading) / pi, self.env.angle_noise), 
+            np.random.normal(intruder.v / MAX_V, self.env.speed_noise)
         ]
         return obs
 
     def get_observation(self):
         # Update own velocity and goal info
+        # No noise for own info
         self.obs = [
             self.v / MAX_V, # [0, 1]
             self.turn_rate / MAX_TURN_RATE, # [-1, 1]
@@ -184,9 +190,6 @@ class Aircraft(Agent):
 
         assert len(self.obs) == 4 + 4 * self.env.sensor_capacity
 
-        # Add Gaussian noises:
-
-
         return self.obs
 
     def nmac(self):
@@ -212,6 +215,9 @@ class Aircraft(Agent):
 
     @property
     def observation_space(self):
+        # 4 original obs (vel, goal), 4 obs for each intruder (1 ID?)
+        # idx = MAX_AGENTS if self.one_hot else 1
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(4 + 4 * self.env.sensor_capacity, ))
         return
 
     @property
@@ -235,7 +241,6 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
                  one_hot=False,
                  render_option=False,
                  speed_noise=1e-3,
-                 turn_rate_noise=1e-3,
                  position_noise=1e-3, 
                  angle_noise=1e-3, 
                  reward_mech='local',
@@ -243,6 +248,11 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
                  rew_closing=2.5,
                  rew_nmac=-15,
                  rew_large_turnrate=-0.1):
+
+        EzPickle.__init__(self, continuous_action_space, n_agents, constant_n_agents,
+                 training_mode, sensor_mode,sensor_capacity, max_time_steps, one_hot,
+                 render_option, speed_noise, position_noise, angle_noise, reward_mech,
+                 rew_arrival, rew_closing, rew_nmac, rew_large_turnrate)
 
         self.t = 0
         self.aircraft = []
@@ -255,9 +265,9 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         self.max_time_steps = max_time_steps
         self.one_hot = one_hot
         self.render_option = render_option
+        self.circle_radius = random.choice(range(MIN_CIRCLE_RADIUS, MAX_CIRCLE_RADIUS))
         # Observation noises:
         self.speed_noise = 1e-3
-        self.turn_rate_noise = 1e-3
         self.position_noise = 1e-3
         self.angle_noise = 1e-3
         # Reward settings:
@@ -277,7 +287,10 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
 
     @property
     def agents(self):
-        return self.aircraft
+        if len(self.aircraft) == 0:
+            return [Aircraft(self)] * self.n_agents
+        else:
+            return self.aircraft
 
     def seed(self, seed=None):
         self.np_random, seed_ = seeding.np_random(seed)
@@ -326,7 +339,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
             self.aircraft[i].apply_action(act_vec[i])
 
         # Check if episode is done
-        done = (len(self.aircraft) == 0 or self.t > MAX_TIME_STEPS)
+        done = (len(self.aircraft) == 0 or self.t > self.max_time_steps)
 
         # Get obs (list of arrays)
         for i in range(self.n_agents):
@@ -400,7 +413,4 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         plt.draw()
         plt.pause(0.0001)
         plt.clf()
-
-
-
 

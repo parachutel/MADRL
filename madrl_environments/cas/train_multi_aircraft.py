@@ -40,7 +40,7 @@ def main():
 
     parser.add_argument('--n_iter', type=int, default=250)
     parser.add_argument('--sampler', type=str, default='simple')
-    parser.add_argument('--max_traj_len', type=int, default=500)
+    parser.add_argument('--max_traj_len', type=int, default=1000)
     parser.add_argument('--n_timesteps', type=int, default=8000)  # number of traj in an iteration
 
     parser.add_argument('--n_workers', type=int, default=4)  # number of parallel workers for sampling
@@ -54,11 +54,11 @@ def main():
     parser.add_argument('--vf_max_kl', type=float, default=0.01)
     parser.add_argument('--vf_cg_damping', type=float, default=0.01)
 
-    parser.add_argument('--n_agents', type=int, default=2)
+    parser.add_argument('--n_agents', type=int, default=5)
 
     parser.add_argument('--save_freq', type=int, default=20)
     parser.add_argument('--log', type=str, required=False)
-    parser.add_argument('--tblog', type=str, default='../../logs')
+    parser.add_argument('--tblog', type=str, default='/Users/shengli/Desktop/MADRL/logs') # TDB
     parser.add_argument('--debug', dest='debug', action='store_true')
     parser.add_argument('--no-debug', dest='debug', action='store_false')
 
@@ -79,6 +79,7 @@ def main():
             dset = f[file_key]
 
             pprint.pprint(dict(dset.attrs))
+        # For continuous action space
         policy = GaussianMLPPolicy(env.observation_space, env.action_space,
                                    hidden_spec=train_args['policy_hidden_spec'], enable_obsnorm=True,
                                    min_stdev=0., init_logstdev=0., tblog=train_args['tblog'],
