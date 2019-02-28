@@ -381,8 +381,9 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
             plt.xlim((-self.circle_radius * 1.2, self.circle_radius * 1.2))
             plt.ylim((-self.circle_radius * 1.2, self.circle_radius * 1.2))
         elif self.training_mode == 'square':
-            plt.xlim((0, AIRSPACE_WIDTH))
-            plt.ylim((0, AIRSPACE_WIDTH))
+            plt.gca().set_xlim(left=0, right=AIRSPACE_WIDTH)
+            plt.gca().set_ylim(bottom=0, top=AIRSPACE_WIDTH)
+            plt.gca().axis('equal')
         elif self.training_mode == 'annulus':
             th = np.linspace(-pi, pi, 30)
             plt.plot(INNER_RADIUS * np.cos(th), INNER_RADIUS * np.sin(th), 
