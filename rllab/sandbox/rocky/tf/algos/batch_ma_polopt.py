@@ -137,7 +137,7 @@ class BatchMAPolopt(RLAlgorithm):
                 for ctrial in range(curriculum.n_trials):
                     task_prob = np.random.dirichlet(task_dist)
                     task = np.random.choice(curriculum.tasks, p=task_prob)
-                    print(task)
+                    print("Number of agents: {}".format(task.n_agents))
                     self.env.set_param_values(task.prop)
                     self.start_worker()
                     for itr in range(start_itr, end_itr):
