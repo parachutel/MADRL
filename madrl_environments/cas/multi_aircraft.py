@@ -16,6 +16,7 @@ from madrl_environments import AbstractMAEnv, Agent
 
 from rltools.util import EzPickle
 
+
 # Multi-agent settings
 MIN_AGENTS = 10
 MAX_AGENTS = 60
@@ -55,6 +56,8 @@ OUTTER_RADIUS = 4000 # in m
 # For training scenario: in square space
 AIRSPACE_WIDTH = 6000 # in m 
 
+
+
 # Angle range helper
 # wrap an angle in (- pi, pi] 
 def norm_angle(angle):
@@ -82,6 +85,7 @@ def sort_agents(ref, arr, low, high):
         parti = partition(ref, arr, low, high) 
         sort_agents(ref, arr, low, parti - 1) 
         sort_agents(ref, arr, parti + 1, high) 
+
 
 # Agent definition
 class Aircraft(Agent): 
@@ -227,6 +231,7 @@ class Aircraft(Agent):
         else:
             pass # TODO
 
+
 # Environment definition
 class MultiAircraftEnv(AbstractMAEnv, EzPickle):
 
@@ -287,10 +292,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
 
     @property
     def agents(self):
-        if len(self.aircraft) == 0:
-            return [Aircraft(self)] * self.n_agents
-        else:
-            return self.aircraft
+        return [Aircraft(self)] * self.n_agents
 
     def seed(self, seed=None):
         self.np_random, seed_ = seeding.np_random(seed)
