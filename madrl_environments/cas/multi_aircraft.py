@@ -48,7 +48,7 @@ TRAINING_SCENARIOS = ['circle']
 
 # For training scenario: on circle
 MIN_CIRCLE_RADIUS = 4000 # in m 
-MAX_CIRCLE_RADIUS = 4000 # in m 
+MAX_CIRCLE_RADIUS = 4001 # in m 
 
 # For training scenario: in annulus
 INNER_RADIUS = 2000 # in m 
