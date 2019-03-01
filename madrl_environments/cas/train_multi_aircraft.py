@@ -126,7 +126,6 @@ def main():
     log_f = rltools.log.TrainingLog(args.log, [('args', argstr)], debug=args.debug)
 
     with tf.Session() as sess:
-    	print("..sadf.ae.taw.eg.ads.")
         sess.run(tf.initialize_all_variables())
         if args.load_checkpoint is not 'none':
             policy.load_h5(sess, filename, file_key)
