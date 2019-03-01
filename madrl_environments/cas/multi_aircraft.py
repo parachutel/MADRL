@@ -42,19 +42,19 @@ MAX_TURN_RATE = np.deg2rad(10) # in rad/s
 
 # Training settings
 DT = 1 # in s
-MAX_TIME_STEPS = 2000 # in s
+MAX_TIME_STEPS = 8000 # in s
 TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
 
 # For training scenario: on circle
 MIN_CIRCLE_RADIUS = 3000 # in m 
-MAX_CIRCLE_RADIUS = 4000 # in m 
+MAX_CIRCLE_RADIUS = 5000 # in m 
 
 # For training scenario: in annulus
 INNER_RADIUS = 2000 # in m 
 OUTTER_RADIUS = 4000 # in m 
 
 # For training scenario: in square space
-AIRSPACE_WIDTH = 6000 # in m 
+AIRSPACE_WIDTH = 8000 # in m 
 
 
 
