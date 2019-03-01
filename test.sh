@@ -5,4 +5,8 @@ python3 runners/run_multiaircraft.py rllab \
     --n_iter 200 \
     --n_agents 5 \
     --batch_size 24000 \
+    --rew_arrival 15.0 \
+    --rew_closing 2.5 \
+    --rew_nmac -15.0 \
+    --rew_large_turnrate -0.1 \
     --curriculum lessons/cas/env.yaml
