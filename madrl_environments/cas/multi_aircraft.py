@@ -43,11 +43,12 @@ MAX_TURN_RATE = np.deg2rad(10) # in rad/s
 # Training settings
 DT = 1 # in s
 MAX_TIME_STEPS = 8000 # in s
-TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
+# TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
+TRAINING_SCENARIOS = ['circle']
 
 # For training scenario: on circle
-MIN_CIRCLE_RADIUS = 3000 # in m 
-MAX_CIRCLE_RADIUS = 5000 # in m 
+MIN_CIRCLE_RADIUS = 4000 # in m 
+MAX_CIRCLE_RADIUS = 4000 # in m 
 
 # For training scenario: in annulus
 INNER_RADIUS = 2000 # in m 
@@ -305,7 +306,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
 
     def reset(self):
         self.t = 0
-        
+
         # self._destroy()
         self.aircraft = []
 

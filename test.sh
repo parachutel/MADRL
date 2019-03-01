@@ -1,5 +1,7 @@
 export PYTHONPATH=$(pwd):$(pwd)/rltools:$(pwd)/rllab:$PYTHONPATH
 python3 runners/run_multiaircraft.py rllab \
+	--algo tftrpo \
+	--max_path_length 5000 \
     --control decentralized \
     --sampler simple \
     --policy_hidden 100,50,25 \
