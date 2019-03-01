@@ -64,6 +64,7 @@ class BatchMASampler(BaseSampler):
         elif self.algo.ma_mode == 'concurrent':
             processed_samples = []
             for ps, policy, baseline in zip(paths, self.algo.policies, self.algo.baselines):
+
                 baselines = []
                 returns = []
 

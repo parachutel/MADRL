@@ -145,6 +145,7 @@ class BatchMAPolopt(RLAlgorithm):
                         with logger.prefix('curr: #%d itr #%d |' % (ctrial, itr)):
                             logger.log("Obtaining samples...")
                             paths = self.obtain_samples(itr)
+                            print('number of paths = {}'.format(len(paths)))
                             logger.log("Processing samples...")
                             # TODO Process appropriately for concurrent or decentralized
                             samples_data = self.process_samples(itr, paths)
@@ -175,7 +176,7 @@ class BatchMAPolopt(RLAlgorithm):
                     evres = evaluate(self.env, self.policy, max_path_length=self.max_path_length,
                                      n_paths=curriculum.eval_trials, ma_mode=self.ma_mode,
                                      disc=self.discount)
-                    task_eval_reward[task] += np.mean(evres[curriculum.metric])  # TODO
+                    task_eval_reward[task] += np.mean(evres[curriculum.metric]) # TODO
                     task_counts[task] += 1
 
                 # Check how we have progressed

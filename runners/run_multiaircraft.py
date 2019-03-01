@@ -12,7 +12,7 @@ ENV_OPTIONS = [
     ('speed_noise', float, 1e-3, ''),
     ('reward_mech', str, 'local', ''),
     ('rew_arrival', float, 15.0, ''),
-    ('rew_closing', float, 1.0, ''),
+    ('rew_closing', float, 0.08, ''),
     ('rew_nmac', float, -15.0, ''),
     ('rew_large_turnrate', float, -0.1, ''),
     ('buffer_size', int, 1, ''),

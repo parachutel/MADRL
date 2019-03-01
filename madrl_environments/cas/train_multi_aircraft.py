@@ -112,6 +112,7 @@ def main():
                             adaptive=False, n_workers=args.sampler_workers)
     else:
         raise NotImplementedError()
+    
     step_func = rltools.algos.policyopt.TRPO(max_kl=args.max_kl)
     popt = rltools.algos.policyopt.SamplingPolicyOptimizer(env=env, policy=policy,
                                                            baseline=baseline, step_func=step_func,
