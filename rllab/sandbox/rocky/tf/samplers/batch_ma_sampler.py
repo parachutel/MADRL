@@ -50,6 +50,7 @@ class BatchMASampler(BaseSampler):
             max_path_length=self.algo.max_path_length,
             ma_mode=self.algo.ma_mode,
             scope=self.algo.scope,)
+        print(len(paths))
         if self.algo.whole_paths:
             return paths
         else:
