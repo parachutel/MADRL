@@ -40,7 +40,7 @@ def main():
 
     parser.add_argument('--n_iter', type=int, default=250)
     parser.add_argument('--sampler', type=str, default='simple')
-    parser.add_argument('--max_traj_len', type=int, default=1000)
+    parser.add_argument('--max_traj_len', type=int, default=5000)
     parser.add_argument('--n_timesteps', type=int, default=8000)  # number of traj in an iteration
 
     parser.add_argument('--n_workers', type=int, default=4)  # number of parallel workers for sampling

@@ -168,6 +168,7 @@ class BatchMAPolopt(RLAlgorithm):
                                 self.update_plot()
                                 if self.pause_for_plot:
                                     input("Plotting evaluation run: Press Enter to " "continue...")
+                                    
                     start_itr = end_itr
                     end_itr += self.n_itr
                     logger.log("Evaluating...")

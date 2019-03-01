@@ -308,6 +308,8 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         self.aircraft = []
 
         self.training_mode = random.choice(TRAINING_SCENARIOS)
+        # print('env reset')
+        # print('env.training_mode = {}'.format(self.training_mode))
         if self.training_mode == 'circle':
             self.circle_radius = random.choice(range(MIN_CIRCLE_RADIUS, MAX_CIRCLE_RADIUS))
 

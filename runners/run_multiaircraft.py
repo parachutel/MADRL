@@ -6,13 +6,13 @@ from madrl_environments import StandardizedEnv, ObservationBuffer
 
 # yapf: disable
 ENV_OPTIONS = [
-    ('n_agents', int, 5, ''),
+    ('n_agents', int, 15, ''),
     ('position_noise', float, 1e-3, ''),
     ('angle_noise', float, 1e-3, ''),
     ('speed_noise', float, 1e-3, ''),
     ('reward_mech', str, 'local', ''),
     ('rew_arrival', float, 15.0, ''),
-    ('rew_closing', float, 2.5, ''),
+    ('rew_closing', float, 1.0, ''),
     ('rew_nmac', float, -15.0, ''),
     ('rew_large_turnrate', float, -0.1, ''),
     ('buffer_size', int, 1, ''),
