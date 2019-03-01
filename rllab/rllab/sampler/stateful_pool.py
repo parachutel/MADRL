@@ -153,7 +153,6 @@ class StatefulPool(object):
                 if show_prog_bar:
                     pbar.inc(inc)
             print('HERE')
-            print(count)
             if show_prog_bar:
                 pbar.stop()
             return results

@@ -7,7 +7,7 @@ python3 runners/run_multiaircraft.py rllab \
     --policy_hidden 100,50,25 \
     --n_iter 35 \
     --n_agents 15 \
-    --batch_size 24000 \
+    --batch_size 30000 \
     --max_traj_len 5000 \
     --rew_arrival 15.0 \
     --rew_closing 2.5 \

@@ -112,7 +112,7 @@ def main():
                             adaptive=False, n_workers=args.sampler_workers)
     else:
         raise NotImplementedError()
-    
+
     step_func = rltools.algos.policyopt.TRPO(max_kl=args.max_kl)
     popt = rltools.algos.policyopt.SamplingPolicyOptimizer(env=env, policy=policy,
                                                            baseline=baseline, step_func=step_func,
@@ -126,6 +126,7 @@ def main():
     log_f = rltools.log.TrainingLog(args.log, [('args', argstr)], debug=args.debug)
 
     with tf.Session() as sess:
+    	print("..sadf.ae.taw.eg.ads.")
         sess.run(tf.initialize_all_variables())
         if args.load_checkpoint is not 'none':
             policy.load_h5(sess, filename, file_key)
