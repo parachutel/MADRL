@@ -176,6 +176,7 @@ class BatchMAPolopt(RLAlgorithm):
                                      disc=self.discount)
                     task_eval_reward[task] += np.mean(evres[curriculum.metric])  # TODO
                     task_counts[task] += 1
+
                 # Check how we have progressed
                 scores = []
                 for i, task in enumerate(curriculum.tasks):
@@ -185,13 +186,12 @@ class BatchMAPolopt(RLAlgorithm):
                         scores.append(score)
                     else:
                         scores.append(-np.inf)
-
+                print('Eval scores = {}'.format(scores))
                 min_reward = min(min_reward, min(scores))
                 rel_reward = scores[np.argmax(task_dist)]
                 if rel_reward > curriculum.lesson_threshold:
-                    logger.log("task: {} breached, reward: {}!".format(
-                        np.argmax(task_dist), rel_reward))
-                    task_dist = np.roll(task_dist, 1)
+                    logger.log("task: {} breached, reward: {}!".format(np.argmax(task_dist), rel_reward))
+                    task_dist = np.roll(task_dist, 1) # update distribution
                 if min_reward > curriculum.stop_threshold:
                     # Special SAVE?
                     break
