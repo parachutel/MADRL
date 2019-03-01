@@ -1,7 +1,7 @@
 export PYTHONPATH=$(pwd):$(pwd)/rltools:$(pwd)/rllab:$PYTHONPATH
 python3 runners/run_multiaircraft.py rllab \
     --control decentralized \
-    --sampler parallel \
+    --sampler simple \
     --policy_hidden 100,50,25 \
     --n_iter 35 \
     --n_agents 15 \
