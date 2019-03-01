@@ -304,6 +304,8 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         self.aircraft = []
 
     def reset(self):
+        self.t = 0
+        
         # self._destroy()
         self.aircraft = []
 
