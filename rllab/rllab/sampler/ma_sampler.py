@@ -217,6 +217,7 @@ def _worker_collect_path_one_env(G, max_path_length, ma_mode, scope=None):
         return path, len(path['rewards'])
     elif ma_mode == 'decentralized':
         paths = dec_rollout(G.env, G.policy, max_path_length)
+        print('_worker_collect_path_one_env number of paths = {}'.format(len(paths)))
         lengths = [len(path['rewards']) for path in paths]
         return paths, sum(lengths)
     elif ma_mode == 'concurrent':
