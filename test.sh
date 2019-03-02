@@ -4,7 +4,7 @@ python3 runners/run_multiaircraft.py rllab \
     --control decentralized \
     --sampler simple \
     --policy_hidden 100,50,50 \
-    --n_iter 35 \
+    --n_iter 200 \
     --n_agents 15 \
     --batch_size 30000 \
     --max_path_length 5000 \
