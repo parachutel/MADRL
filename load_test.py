@@ -3,11 +3,14 @@ import rllab
 import tensorflow as tf
 import json
 
-data_file_path = './rllab/data/experiment_2019_03_01_17_04_37_793639_PST_d1c5e/itr_4.pkl'
+data_file_path = './rllab/data/experiment_2019_03_05_09_54_11_296673_PST_08c0f/itr_4.pkl'
 
 with tf.Session() as sess:
 	data = joblib.load(data_file_path)
-	print(data['policy'])
+    policy = data['policy']
+    env = data['env']
+    path = rollout(env, policy, max_path_length=1000, 
+    				animated=False, speedup=1)
 
 
 # run_experiment
