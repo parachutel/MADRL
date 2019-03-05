@@ -49,7 +49,7 @@ with tf.Session() as sess:
     data = joblib.load(data_file_path)
     policy = data['policy']
     env = data['env']
-    print(env.max_time_steps)
+    print(env.reset())
     # path = rollout(env, policy, max_path_length=1000, 
     #                 animated=False, speedup=1)
 
