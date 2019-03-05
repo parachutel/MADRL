@@ -136,6 +136,7 @@ class BatchMAPolopt(RLAlgorithm):
             # while True:
             schedule = {'i_curr' : [0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7],
                         'iter' : [50, 50, 100, 100, 100, 200, 200, 200, 50, 50, 100, 100, 100, 200, 200, 200]}
+            i_counter = 0
             i_schedule = 0
             while i_schedule < len(schedule['i_curr']):
                 task = curriculum.tasks[schedule['i_curr'][i_schedule]]
@@ -151,7 +152,8 @@ class BatchMAPolopt(RLAlgorithm):
                 for itr in range(schedule['iter'][i_schedule]):
                     itr_start_time = time.time()
                     # with logger.prefix('curr_trial: #%d itr #%d |' % (ctrial, itr)):
-                    with logger.prefix('curr: #%d itr #%d |' % (schedule['i_curr'][i_schedule], itr)):
+                    with logger.prefix('curr: #%d itr #%d |' % (schedule['i_curr'][i_schedule], i_counter)):
+                        i_counter += 1
                         logger.log("Obtaining samples...")
                         paths = self.obtain_samples(itr)
                         # print('number of ma_paths = {}'.format(len(paths)))
@@ -189,7 +191,7 @@ class BatchMAPolopt(RLAlgorithm):
                 task_counts[task] += 1
 
                 i_schedule += 1
-                
+
                 # Check how we have progressed
                 scores = []
                 for i, task in enumerate(curriculum.tasks):
