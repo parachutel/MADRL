@@ -1,7 +1,6 @@
 import joblib
-import rllab
 import tensorflow as tf
-import json
+from rllab.sampler.utils import rollout
 
 data_file_path = './rllab/data/experiment_2019_03_05_09_54_11_296673_PST_08c0f/itr_4.pkl'
 
