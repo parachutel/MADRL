@@ -21,20 +21,22 @@ from rltools.util import EzPickle
 MIN_AGENTS = 10
 MAX_AGENTS = 60
 
-DEST_THRESHOLD = 50 # in m
+DEST_THRESHOLD = 100 # in m
 
 # Sensor model parameters
 SENSING_RANGE = 1000 # in m
 SENSOR_CAPACITY = 4
-NMAC_RANGE = 150 # in s
-TERM_PAIRWISE_OBS = [1] * 4
+NMAC_RANGE = 100 # in s
+OWN_OBS_DIM = 4
+PAIR_OBS_DIM = 4
+TERM_PAIRWISE_OBS = [1] * PAIR_OBS_DIM
 
 # Agent continuous dynamics properties
 ACTION_IND_ACC = 0
 ACTION_IND_TURN = 1
 ACTION_DIM = 2
-MIN_V = 15 # in m/s
-MAX_V = 45 # in m/s
+MIN_V = 0 # in m/s
+MAX_V = 40 # in m/s
 MIN_ACC = 0 # in m/s^2
 MAX_ACC = 5 # in m/s^2
 MIN_TURN_RATE = 0 # in rad/s
@@ -94,7 +96,8 @@ class Aircraft(Agent):
     def __init__(self, env):
         self._seed()
         self.env = env
-        self.v = MIN_V
+        # self.v = MAX_V / 3
+        self.v = MAX_V * np.random.rand()
         self.turn_rate = 0
         if self.env.training_mode == 'circle':
             r = self.env.circle_radius
@@ -135,7 +138,7 @@ class Aircraft(Agent):
 
         # obs from intruders [dist, angle_wrt_heading, heading_diff, v_int]
 
-        assert len(self.obs) == 4 + 4 * self.env.sensor_capacity
+        assert len(self.obs) == OWN_OBS_DIM + PAIR_OBS_DIM * self.env.sensor_capacity
 
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -174,28 +177,30 @@ class Aircraft(Agent):
                 - self.heading) / pi # [-1, 1], Angle of destination wrt agent 
         ]
 
-        # Construct intruders list
-        intruders = []
-        for agent in self.env.aircraft:
-            if agent_dist(self, agent) > 0 and agent_dist(self, agent) <= SENSING_RANGE:
-                intruders.append(agent)
+        # Construct intruders list if self is not arrival
+        if not self.arrival():
+            intruders = []
+            for agent in self.env.aircraft:
+                if agent_dist(self, agent) > 0 and agent_dist(self, agent) <= SENSING_RANGE and agent.arrival() == False:
+                    intruders.append(agent)
+    
+            if self.env.sensor_mode == 'sector':
+                pass # TODO
+            elif self.env.sensor_mode == 'closest':
+                if len(intruders) > 0:
+                    # Ascending order in terms of distance from ownship
+                    sort_agents(self, intruders, 0, len(intruders) - 1)
+                    for i in range(self.env.sensor_capacity):
+                        if i < len(intruders):
+                            self.obs += self.get_pairwise_obs(intruders[i])
+                        else:
+                            self.obs += TERM_PAIRWISE_OBS
+                else: # no intruder
+                    self.obs += TERM_PAIRWISE_OBS * self.env.sensor_capacity
+        else:
+            self.obs += TERM_PAIRWISE_OBS * self.env.sensor_capacity
 
-        if self.env.sensor_mode == 'sector':
-            pass # TODO
-        elif self.env.sensor_mode == 'closest':
-            if len(intruders) > 0:
-                # Ascending order in terms of distance from ownship
-                sort_agents(self, intruders, 0, len(intruders) - 1) 
-                for i in range(self.env.sensor_capacity):
-                    if i < len(intruders):
-                        self.obs += self.get_pairwise_obs(intruders[i])
-                    else:
-                        self.obs += TERM_PAIRWISE_OBS
-            else: # no intruder
-                self.obs += TERM_PAIRWISE_OBS * self.env.sensor_capacity
-
-        assert len(self.obs) == 4 + 4 * self.env.sensor_capacity
-
+        assert len(self.obs) == OWN_OBS_DIM + PAIR_OBS_DIM * self.env.sensor_capacity
         return self.obs
 
     def nmac(self):
@@ -223,8 +228,7 @@ class Aircraft(Agent):
     def observation_space(self):
         # 4 original obs (vel, goal), 4 obs for each intruder (1 ID?)
         # idx = MAX_AGENTS if self.one_hot else 1
-        return spaces.Box(low=-np.inf, high=np.inf, shape=(4 + 4 * self.env.sensor_capacity, ))
-        return
+        return spaces.Box(low=-1, high=1, shape=(OWN_OBS_DIM + PAIR_OBS_DIM * self.env.sensor_capacity, ))
 
     @property
     def action_space(self):
@@ -358,15 +362,12 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         # else:
         #     obs.append(float(i) / self.n_agents)
 
-        if not done:
-            self.n_agents_control()
-
         if self.render_option:
             plt.ion()
             self.render()
 
         # Check if episode is done
-        done = (len(self.aircraft) == 0 or self.t > self.max_time_steps)
+        done = (len(self.aircraft) == 0 or self.t > self.max_time_steps or all([ac.arrival() for ac in self.aircraft]))
 
         # Increment time step
         self.t += 1

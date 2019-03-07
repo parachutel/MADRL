@@ -25,7 +25,7 @@ def vis_slice(env,
         own_v=45, 
         own_heading=0,
         own_turn_rate=0,
-        int_heading=np.deg2rad(180), 
+        int_heading=np.deg2rad(270), 
         int_v=15):
     
     intruder = Aircraft(env)
@@ -34,8 +34,8 @@ def vis_slice(env,
         env.reset()
         env.aircraft[0].x = 0
         env.aircraft[0].y = 0
-        env.aircraft[0].dest_x = 4000
-        env.aircraft[0].dest_y = 0
+        env.aircraft[0].dest_x = 2000
+        env.aircraft[0].dest_y = 2000
         env.aircraft[0].heading = own_heading
         env.aircraft[0].dist_to_dest = np.sqrt((env.aircraft[0].dest_y)**2 + (env.aircraft[0].dest_x)**2)
         env.aircraft[0].init_dist_to_dest = env.aircraft[0].dist_to_dest
