@@ -240,6 +240,9 @@ class Aircraft(Agent):
             if np.abs(actions[ACTION_IND_TURN]) > 0.7:
                 reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
 
+        if (not self.arrival()) and self.v == 0: # anti-stop
+            reward -= self.env.rew_closing * self.dist_to_dest
+
         return reward
 
     @property
