@@ -36,7 +36,7 @@ def vis_slice(env,
         env.aircraft[0].y = 0
         env.aircraft[0].dest_x = 4000
         env.aircraft[0].dest_y = 0
-        env.aircraft[0].own_heading = own_heading
+        env.aircraft[0].heading = own_heading
         env.aircraft[0].dist_to_dest = np.sqrt((env.aircraft[0].dest_y)**2 + (env.aircraft[0].dest_x)**2)
         env.aircraft[0].init_dist_to_dest = env.aircraft[0].dist_to_dest
         env.aircraft[0].prev_dist_to_dest = env.aircraft[0].dist_to_dest
@@ -61,14 +61,17 @@ def vis_slice(env,
         for i in range(resolution):
             acc_map[j][i] = get_heat(x_arr[i], y_arr[j])[1]['mean'][0]
             turn_rate_map[j][i] = get_heat(x_arr[i], y_arr[j])[1]['mean'][1]
+            # print(turn_rate_map[j][i])
 
     acc_map = np.flipud(acc_map)
     turn_rate_map = np.flipud(turn_rate_map)
 
     plt.figure()
     plt.imshow(acc_map, cmap="jet", extent=(XMIN, XMAX, YMIN, YMAX))
+    plt.colorbar(label='acc')
     plt.figure()
     plt.imshow(turn_rate_map, cmap="jet", extent=(XMIN, XMAX, YMIN, YMAX))
+    plt.colorbar(label='turn_rate')
     plt.ion()
 
 def vis(resolution=100,

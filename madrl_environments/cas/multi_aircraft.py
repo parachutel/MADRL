@@ -38,7 +38,7 @@ MAX_V = 45 # in m/s
 MIN_ACC = 0 # in m/s^2
 MAX_ACC = 5 # in m/s^2
 MIN_TURN_RATE = 0 # in rad/s
-MAX_TURN_RATE = np.deg2rad(10) # in rad/s
+MAX_TURN_RATE = np.deg2rad(10) # approx. 0.1745 rad/s
 
 # Training settings
 DT = 1 # in s
@@ -143,8 +143,9 @@ class Aircraft(Agent):
 
     def apply_action(self, action):
         # Entries of action vector in [-1, 1]
-        self.v = np.clip(self.v + MAX_ACC * np.clip(action[ACTION_IND_ACC], -1, 1) * DT, MIN_V, MAX_V) 
+        acc = MAX_ACC * np.clip(action[ACTION_IND_ACC], -1, 1)
         self.turn_rate = MAX_TURN_RATE * np.clip(action[ACTION_IND_TURN], -1, 1)
+        self.v = np.clip(self.v + acc * DT, MIN_V, MAX_V) 
         self.heading = norm_angle(self.heading + self.turn_rate * DT)
         # Update coordinates
         self.x += np.cos(self.heading) * self.v * DT
@@ -166,7 +167,7 @@ class Aircraft(Agent):
         # Update own velocity and goal info
         # No noise for own info
         self.obs = [
-            self.v / MAX_V, # [0, 1]
+            (self.v - MIN_V) / MAX_V, # [0, 1]
             self.turn_rate / MAX_TURN_RATE, # [-1, 1]
             self.dist_to_dest / self.init_dist_to_dest, # [0, 1],
             norm_angle(math.atan2(self.dest_y - self.y, self.dest_x - self.x) \
@@ -227,10 +228,10 @@ class Aircraft(Agent):
 
     @property
     def action_space(self):
-        if self.env.continuous_action_space:
-            return spaces.Box(low=-1, high=1, shape=(ACTION_DIM,))
-        else:
-            pass # TODO
+        # if self.env.continuous_action_space:
+        return spaces.Box(low=-1, high=1, shape=(ACTION_DIM,))
+        # else:
+        #     pass # TODO
 
 
 # Environment definition
@@ -324,12 +325,13 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
                 if self.aircraft[i].arrival():
                     del self.aircraft[i]
                     self.aircraft.insert(i, Aircraft(self))
-        else:
+        else: # Un-usable
             i = 0
             while i < len(self.aircraft):
                 if self.aircraft[i].arrival():
                     del self.aircraft[i]
                 i += 1
+            self.n_agents = len(self.aircraft)
 
     def step(self, actions):
         obs = []
@@ -341,19 +343,20 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         for i in range(self.n_agents):
             self.aircraft[i].apply_action(act_vec[i])
 
-        # Check if episode is done
-        done = (len(self.aircraft) == 0 or self.t > self.max_time_steps)
-
         # Get obs (list of arrays)
         for i in range(self.n_agents):
             agent_obs = self.aircraft[i].get_observation() # obs with Gaussian noises
             obs.append(np.array(agent_obs))
 
-            # ID necessary?
-            # if self.one_hot:
-            #     obs.extend(np.eye(MAX_AGENTS)[i])
-            # else:
-            #     obs.append(float(i) / self.n_agents)
+        # Get rewards
+        for i in range(self.n_agents):
+            rewards[i] = self.aircraft[i].reward()
+
+        # ID necessary?
+        # if self.one_hot:
+        #     obs.extend(np.eye(MAX_AGENTS)[i])
+        # else:
+        #     obs.append(float(i) / self.n_agents)
 
         if not done:
             self.n_agents_control()
@@ -362,9 +365,8 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
             plt.ion()
             self.render()
 
-        # Get rewards
-        for i in range(self.n_agents):
-            rewards[i] = self.aircraft[i].reward()
+        # Check if episode is done
+        done = (len(self.aircraft) == 0 or self.t > self.max_time_steps)
 
         # Increment time step
         self.t += 1
