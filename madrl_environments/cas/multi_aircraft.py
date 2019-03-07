@@ -64,7 +64,7 @@ AIRSPACE_WIDTH = 8000 # in m
 def norm_angle(angle):
     return (angle + pi) % (2 * pi) - pi
 
-# Agents sorting helper
+# Agents sorting helpers
 def agent_dist(a, b):
     return np.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
 
@@ -143,8 +143,8 @@ class Aircraft(Agent):
 
     def apply_action(self, action):
         # Entries of action vector in [-1, 1]
-        self.v = np.clip(self.v + MAX_ACC * action[ACTION_IND_ACC] * DT, MIN_V, MAX_V) 
-        self.turn_rate = MAX_TURN_RATE * action[ACTION_IND_TURN]
+        self.v = np.clip(self.v + MAX_ACC * np.clip(action[ACTION_IND_ACC], -1, 1) * DT, MIN_V, MAX_V) 
+        self.turn_rate = MAX_TURN_RATE * np.clip(action[ACTION_IND_TURN], -1, 1)
         self.heading = norm_angle(self.heading + self.turn_rate * DT)
         # Update coordinates
         self.x += np.cos(self.heading) * self.v * DT
@@ -239,7 +239,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
     def __init__(self, 
                  continuous_action_space=True,
                  n_agents=MIN_AGENTS,
-                 constant_n_agents=False,
+                 constant_n_agents=True,
                  training_mode='circle', 
                  sensor_mode='closest',
                  sensor_capacity=SENSOR_CAPACITY,
@@ -306,13 +306,9 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
 
     def reset(self):
         self.t = 0
-
-        # self._destroy()
         self.aircraft = []
 
         self.training_mode = random.choice(TRAINING_SCENARIOS)
-        # print('env reset')
-        # print('env.training_mode = {}'.format(self.training_mode))
         if self.training_mode == 'circle':
             self.circle_radius = random.choice(range(MIN_CIRCLE_RADIUS, MAX_CIRCLE_RADIUS))
 
@@ -358,6 +354,9 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
             #     obs.extend(np.eye(MAX_AGENTS)[i])
             # else:
             #     obs.append(float(i) / self.n_agents)
+
+        if not done:
+            self.n_agents_control()
 
         if self.render_option:
             plt.ion()

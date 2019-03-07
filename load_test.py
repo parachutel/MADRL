@@ -1,57 +1,104 @@
+from __future__ import print_function
+from ipywidgets import interact, interactive, fixed, interact_manual
+import ipywidgets as widgets
+
+from madrl_environments.cas.multi_aircraft import *
+
+import matplotlib.pyplot as plt
+
 import joblib
 import tensorflow as tf
 import numpy as np
-from rllab.misc import tensor_utils
-import time
+# from rllab.misc import tensor_utils
+# import time
 
-data_file_path = './rllab/data/experiment_2019_03_05_09_54_11_296673_PST_08c0f/itr_4.pkl'
+data_file_path = './rllab/data/test/itr_399.pkl'
 
-def rollout(env, agent, max_path_length=np.inf, animated=False, speedup=1):
-    observations = []
-    actions = []
-    rewards = []
-    agent_infos = []
-    env_infos = []
-    o = env.reset()
-    agent.reset()
-    path_length = 0
-    if animated:
-        env.render()
-    while path_length < max_path_length:
-        a, agent_info = agent.get_action(o)
-        next_o, r, d, env_info = env.step(a)
-        observations.append(env.observation_space.flatten(o))
-        rewards.append(r)
-        actions.append(env.action_space.flatten(a))
-        agent_infos.append(agent_info)
-        env_infos.append(env_info)
-        path_length += 1
-        if d:
-            break
-        o = next_o
-        if animated:
-            env.render()
-            timestep = 0.05
-            time.sleep(timestep / speedup)
-    if animated:
-        env.render(close=True)
+XMIN = -1200
+XMAX = 1200
+YMIN = XMIN
+YMAX = XMAX
 
-    return dict(
-        observations=tensor_utils.stack_tensor_list(observations),
-        actions=tensor_utils.stack_tensor_list(actions),
-        rewards=tensor_utils.stack_tensor_list(rewards),
-        agent_infos=tensor_utils.stack_tensor_dict_list(agent_infos),
-        env_infos=tensor_utils.stack_tensor_dict_list(env_infos),
-    )
+def vis_slice(env,
+        policy,
+        resolution=100,
+        own_v=45, 
+        own_heading=0,
+        own_turn_rate=0,
+        int_heading=np.deg2rad(180), 
+        int_v=15):
+    
+    intruder = Aircraft(env)
+
+    def get_heat(x, y):
+        env.reset()
+        env.aircraft[0].x = 0
+        env.aircraft[0].y = 0
+        env.aircraft[0].dest_x = 4000
+        env.aircraft[0].dest_y = 0
+        env.aircraft[0].own_heading = own_heading
+        env.aircraft[0].dist_to_dest = np.sqrt((env.aircraft[0].dest_y)**2 + (env.aircraft[0].dest_x)**2)
+        env.aircraft[0].init_dist_to_dest = env.aircraft[0].dist_to_dest
+        env.aircraft[0].prev_dist_to_dest = env.aircraft[0].dist_to_dest
+        env.aircraft[0].v = own_v
+        env.aircraft[0].turn_rate = own_turn_rate
+        intruder.x = x
+        intruder.y = y
+        intruder.heading = int_heading
+        env.aircraft.append(intruder)
+        obs = env.aircraft[0].get_observation()
+        action, action_info = policy.get_action(obs)
+        return action, action_info
+
+    acc_map = np.zeros((resolution, resolution))
+    turn_rate_map = np.zeros((resolution, resolution))
+    x_arr = np.linspace(XMIN, XMAX, resolution)
+    y_arr = np.linspace(YMIN, YMAX, resolution)
+
+    # print(get_heat(400, 400))
+
+    for j in range(resolution):
+        for i in range(resolution):
+            acc_map[j][i] = get_heat(x_arr[i], y_arr[j])[1]['mean'][0]
+            turn_rate_map[j][i] = get_heat(x_arr[i], y_arr[j])[1]['mean'][1]
+
+    acc_map = np.flipud(acc_map)
+    turn_rate_map = np.flipud(turn_rate_map)
+
+    plt.figure()
+    plt.imshow(acc_map, cmap="jet", extent=(XMIN, XMAX, YMIN, YMAX))
+    plt.figure()
+    plt.imshow(turn_rate_map, cmap="jet", extent=(XMIN, XMAX, YMIN, YMAX))
+    plt.ion()
+
+def vis(resolution=100,
+        own_v=45, 
+        own_heading=0,
+        own_turn_rate=0,
+        int_heading=np.deg2rad(180), 
+        int_v=15):
+    with tf.Session() as sess:
+        data = joblib.load(data_file_path)
+        policy = data['policy']
+        env = MultiAircraftEnv(n_agents=1)
+        vis_slice(env, policy, 
+            resolution=resolution,
+            own_v=own_v, 
+            own_heading=own_heading,
+            own_turn_rate=own_turn_rate,
+            int_heading=int_heading, 
+            int_v=int_v)
+
+        # interact(vis_slice, 
+        #     env=fixed(env),
+        #     policy=fixed(policy),
+        #     resolution=fixed(200),
+        #     own_v=(15,45,5),
+        #     own_heading=np.deg2rad((-180,180,30)),
+        #     own_turn_rate=(0,10,2),
+        #     own_dist_to_dest=(0,1,0.2),
+        #     own_dist_pos_angle=np.deg2rad((-180,180,30)),
+        #     int_heading=np.deg2rad((-180,180,30)), 
+        #     int_v=(15,45,5)) # before normalization
 
 
-with tf.Session() as sess:
-    data = joblib.load(data_file_path)
-    policy = data['policy']
-    env = data['env']
-    print(env.reset())
-    # path = rollout(env, policy, max_path_length=1000, 
-    #                 animated=False, speedup=1)
-
-
-# run_experiment
