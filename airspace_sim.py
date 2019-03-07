@@ -17,7 +17,7 @@ tf.reset_default_graph()
 with tf.Session() as sess:
 	data = joblib.load(data_file_path)
 	policy = data['policy']
-	env = MultiAircraftEnv(n_agents=5, render_option=True)
+	env = MultiAircraftEnv(n_agents=10, render_option=True)
 	env.reset()
 
 	done = False
