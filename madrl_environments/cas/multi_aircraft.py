@@ -164,6 +164,9 @@ class Aircraft(Agent):
             np.random.normal(norm_angle(intruder.heading - self.heading) / pi, self.env.angle_noise), 
             np.random.normal((intruder.v - MIN_V) / MAX_V, self.env.speed_noise)
         ]
+        # print('intruder.x = {}, intruder.y = {}, intruder.heading = {}, intruder.v = {}'.\
+        #     format(intruder.x, intruder.y, intruder.heading, intruder.v))
+        # print(obs)
         return obs
 
     def get_observation(self):
