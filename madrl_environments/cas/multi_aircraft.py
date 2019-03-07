@@ -46,7 +46,7 @@ MAX_TURN_RATE = np.deg2rad(10) # approx. 0.1745 rad/s
 DT = 1 # in s
 MAX_TIME_STEPS = 500 # in s
 # TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
-TRAINING_SCENARIOS = ['circle']
+TRAINING_SCENARIOS = ['circle', 'square']
 
 # For training scenario: on circle
 MIN_CIRCLE_RADIUS = 2000 # in m 
@@ -57,7 +57,7 @@ INNER_RADIUS = 2000 # in m
 OUTTER_RADIUS = 4000 # in m 
 
 # For training scenario: in square space
-AIRSPACE_WIDTH = 8000 # in m 
+AIRSPACE_WIDTH = 6000 # in m 
 
 
 
@@ -134,7 +134,7 @@ class Aircraft(Agent):
             self.dist_to_dest / self.init_dist_to_dest, # [0, 1],
             norm_angle(math.atan2(self.dest_y - self.y, self.dest_x - self.x) \
                 - self.heading) / pi # [-1, 1], Angle of destination wrt agent 
-        ] + [1] * 4 * self.env.sensor_capacity
+        ] + TERM_PAIRWISE_OBS * self.env.sensor_capacity
 
         # obs from intruders [dist, angle_wrt_heading, heading_diff, v_int]
 
@@ -222,17 +222,24 @@ class Aircraft(Agent):
             reward += self.env.rew_closing * (self.prev_dist_to_dest - self.dist_to_dest)
         if self.nmac():
             reward += self.env.rew_nmac
-        if np.abs(actions[ACTION_IND_TURN] * MAX_TURN_RATE) > MAX_TURN_RATE:
+
+        # Reward weights scaled on normalized actions:
+        # Heavy pen on actions:  
+        if np.abs(actions[ACTION_IND_TURN]) > 1:
             reward += 2 * self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN]) # heavy penality on exceeding bound
-        elif np.abs(actions[ACTION_IND_TURN] * MAX_TURN_RATE) > 0.7 * MAX_TURN_RATE and \
-                np.abs(actions[ACTION_IND_TURN] * MAX_TURN_RATE) < MAX_TURN_RATE:
+        elif np.abs(actions[ACTION_IND_TURN]) > 0.7 and np.abs(actions[ACTION_IND_TURN]) < 1:
             reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
 
-        if np.abs(actions[ACTION_IND_ACC] * MAX_ACC) > MAX_ACC:
+        if np.abs(actions[ACTION_IND_ACC]) > 1:
             reward += 2 * self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC]) # heavy penality on exceeding bound
-        elif np.abs(actions[ACTION_IND_ACC] * MAX_ACC) > 0.7 * MAX_ACC and \
-                np.abs(actions[ACTION_IND_ACC] * MAX_ACC) < MAX_TURN_RATE:
+        elif np.abs(actions[ACTION_IND_ACC]) > 0.7 and np.abs(actions[ACTION_IND_ACC]) < 1:
             reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
+
+        # Low pen on actions:
+        # if np.abs(actions[ACTION_IND_ACC]) > 0.8:
+        #     reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
+        # if np.abs(actions[ACTION_IND_TURN]) > 0.7:
+        #     reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
 
         return reward
 

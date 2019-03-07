@@ -1,6 +1,6 @@
 export PYTHONPATH=$(pwd)/..:$(pwd)/../rltools:$(pwd)/../rllab:$PYTHONPATH
 python3 ../runners/run_multiaircraft.py rllab \
-    --exp_name trpo_pen_actions_using_curr_fewer_agents\
+    --exp_name trpo_full_curr_3_passes_ENV_circle_square\
 	--algo tftrpo \
     --step_size 0.01 \
     --discount 0.99 \
@@ -13,6 +13,6 @@ python3 ../runners/run_multiaircraft.py rllab \
     --rew_arrival 15.0 \
     --rew_closing 0.05 \
     --rew_nmac -15.0 \
-    --rew_large_turnrate -1.0 \
-    --rew_large_acc -0.3 \
+    --rew_large_turnrate -0.05 \
+    --rew_large_acc -0.05 \
     --curriculum ../lessons/cas/env.yaml
