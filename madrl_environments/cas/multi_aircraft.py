@@ -148,7 +148,7 @@ class Aircraft(Agent):
         # Entries of action vector in [-1, 1]
         acc = MAX_ACC * np.clip(action[ACTION_IND_ACC], -1, 1)
         self.turn_rate = MAX_TURN_RATE * np.clip(action[ACTION_IND_TURN], -1, 1)
-        self.v = np.clip(self.v + acc * DT, MIN_V, MAX_V) 
+        self.v = np.clip(self.v + acc * DT, MIN_V, MAX_V)
         self.heading = norm_angle(self.heading + self.turn_rate * DT)
         # Update coordinates
         self.x += np.cos(self.heading) * self.v * DT
@@ -162,7 +162,7 @@ class Aircraft(Agent):
             np.random.normal(agent_dist(self, intruder) / SENSING_RANGE, self.env.position_noise),
             np.random.normal(norm_angle(intruder_pos_angle - self.heading) / pi, self.env.angle_noise), 
             np.random.normal(norm_angle(intruder.heading - self.heading) / pi, self.env.angle_noise), 
-            np.random.normal(intruder.v / MAX_V, self.env.speed_noise)
+            np.random.normal((intruder.v - MIN_V) / MAX_V, self.env.speed_noise)
         ]
         return obs
 
@@ -211,7 +211,7 @@ class Aircraft(Agent):
     def arrival(self):
         return True if self.dist_to_dest < DEST_THRESHOLD else False
 
-    def reward(self):
+    def reward(self, actions):
         reward = 0
         if self.arrival():
             reward += self.env.rew_arrival
@@ -219,8 +219,17 @@ class Aircraft(Agent):
             reward += self.env.rew_closing * (self.prev_dist_to_dest - self.dist_to_dest)
         if self.nmac():
             reward += self.env.rew_nmac
-        if np.abs(self.turn_rate) > 0.7 * MAX_TURN_RATE:
-            reward += self.env.rew_large_turnrate * np.abs(self.turn_rate)
+        if np.abs(actions[ACTION_IND_TURN] * MAX_TURN_RATE) > MAX_TURN_RATE:
+            reward += 2 * self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN]) # heavy penality on exceeding bound
+        elif np.abs(actions[ACTION_IND_TURN] * MAX_TURN_RATE) > 0.7 * MAX_TURN_RATE and \
+                np.abs(actions[ACTION_IND_TURN] * MAX_TURN_RATE) < MAX_TURN_RATE:
+            reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
+
+        if np.abs(actions[ACTION_IND_ACC] * MAX_ACC) > MAX_ACC:
+            reward += 2 * self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC]) # heavy penality on exceeding bound
+        elif np.abs(actions[ACTION_IND_ACC] * MAX_ACC) > 0.7 * MAX_ACC and \
+                np.abs(actions[ACTION_IND_ACC] * MAX_ACC) < MAX_TURN_RATE:
+            reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
 
         return reward
 
@@ -258,12 +267,13 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
                  rew_arrival=15,
                  rew_closing=2.5,
                  rew_nmac=-15,
-                 rew_large_turnrate=-0.1):
+                 rew_large_turnrate=-0.1,
+                 rew_large_acc=-1):
 
         EzPickle.__init__(self, continuous_action_space, n_agents, constant_n_agents,
                  training_mode, sensor_mode,sensor_capacity, max_time_steps, one_hot,
                  render_option, speed_noise, position_noise, angle_noise, reward_mech,
-                 rew_arrival, rew_closing, rew_nmac, rew_large_turnrate)
+                 rew_arrival, rew_closing, rew_nmac, rew_large_turnrate, rew_large_acc)
 
         self.t = 0
         self.aircraft = []
@@ -287,6 +297,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         self.rew_closing = rew_closing
         self.rew_nmac = rew_nmac
         self.rew_large_turnrate = rew_large_turnrate
+        self.rew_large_acc = rew_large_acc
         self.seed()
 
     def get_param_values(self):
@@ -354,7 +365,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
 
         # Get rewards
         for i in range(self.n_agents):
-            rewards[i] = self.aircraft[i].reward()
+            rewards[i] = self.aircraft[i].reward(act_vec[i])
 
         # ID necessary?
         # if self.one_hot:

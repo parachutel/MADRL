@@ -22,30 +22,34 @@ YMAX = XMAX
 def vis_slice(env,
         policy,
         resolution=100,
-        own_v=45, 
+        own_v=20, 
         own_heading=0,
         own_turn_rate=0,
-        int_heading=np.deg2rad(270), 
+        int_heading=np.deg2rad(180), 
         int_v=15):
-    
-    intruder = Aircraft(env)
+
+    env.reset()
+    env.aircraft = []
+    env.aircraft.append(Aircraft(env))
+    env.aircraft.append(Aircraft(env))
+    # ownship setup
+    env.aircraft[0].x = 0
+    env.aircraft[0].y = 0
+    env.aircraft[0].dest_x = 4000
+    env.aircraft[0].dest_y = 0
+    env.aircraft[0].heading = own_heading
+    env.aircraft[0].dist_to_dest = np.sqrt((env.aircraft[0].dest_y)**2 + (env.aircraft[0].dest_x)**2)
+    env.aircraft[0].init_dist_to_dest = env.aircraft[0].dist_to_dest
+    env.aircraft[0].prev_dist_to_dest = env.aircraft[0].dist_to_dest
+    env.aircraft[0].v = own_v
+    env.aircraft[0].turn_rate = own_turn_rate
 
     def get_heat(x, y):
-        env.reset()
-        env.aircraft[0].x = 0
-        env.aircraft[0].y = 0
-        env.aircraft[0].dest_x = 2000
-        env.aircraft[0].dest_y = 2000
-        env.aircraft[0].heading = own_heading
-        env.aircraft[0].dist_to_dest = np.sqrt((env.aircraft[0].dest_y)**2 + (env.aircraft[0].dest_x)**2)
-        env.aircraft[0].init_dist_to_dest = env.aircraft[0].dist_to_dest
-        env.aircraft[0].prev_dist_to_dest = env.aircraft[0].dist_to_dest
-        env.aircraft[0].v = own_v
-        env.aircraft[0].turn_rate = own_turn_rate
-        intruder.x = x
-        intruder.y = y
-        intruder.heading = int_heading
-        env.aircraft.append(intruder)
+        # intruder setup
+        env.aircraft[1].x = x
+        env.aircraft[1].y = y
+        env.aircraft[1].heading = int_heading
+        # ownship:
         obs = env.aircraft[0].get_observation()
         action, action_info = policy.get_action(obs)
         return action, action_info
@@ -59,9 +63,10 @@ def vis_slice(env,
 
     for j in range(resolution):
         for i in range(resolution):
-            acc_map[j][i] = get_heat(x_arr[i], y_arr[j])[1]['mean'][0]
-            turn_rate_map[j][i] = get_heat(x_arr[i], y_arr[j])[1]['mean'][1]
-            # print(turn_rate_map[j][i])
+            actions = get_heat(x_arr[i], y_arr[j])[1]['mean']
+            acc_map[j][i] = actions[ACTION_IND_ACC]
+            turn_rate_map[j][i] = actions[ACTION_IND_TURN]
+            print('acc = {}, tr = {}'.format(acc_map[j][i], turn_rate_map[j][i]))
 
     acc_map = np.flipud(acc_map)
     turn_rate_map = np.flipud(turn_rate_map)
@@ -75,11 +80,12 @@ def vis_slice(env,
     plt.ion()
 
 def vis(resolution=100,
-        own_v=45, 
+        own_v=20, 
         own_heading=0,
         own_turn_rate=0,
         int_heading=np.deg2rad(180), 
-        int_v=15):
+        int_v=30):
+
     with tf.Session() as sess:
         data = joblib.load(data_file_path)
         policy = data['policy']
