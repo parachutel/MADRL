@@ -44,9 +44,9 @@ MAX_TURN_RATE = np.deg2rad(10) # approx. 0.1745 rad/s
 
 # Training settings
 DT = 1 # in s
-MAX_TIME_STEPS = 500 # in s
+MAX_TIME_STEPS = 400 # in s
 # TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
-TRAINING_SCENARIOS = ['square']
+TRAINING_SCENARIOS = ['circle','square']
 
 # For training scenario: on circle
 MIN_CIRCLE_RADIUS = 2000 # in m 
@@ -390,7 +390,8 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
             self.render()
 
         # Check if episode is done
-        done = (len(self.aircraft) == 0 or self.t > self.max_time_steps or all([ac.arrival() for ac in self.aircraft]))
+        # done = (self.t > self.max_time_steps or all([ac.arrival() for ac in self.aircraft]))
+        done = (self.t > self.max_time_steps)
 
         # Increment time step
         self.t += 1
@@ -401,8 +402,12 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
 
     def render(self):
         for ac in self.aircraft:
-            plt.scatter(ac.x, ac.y, marker="o", color="blue", s=12)
-            arrow_len = ac.v * 20
+            if ac.arrival():
+                color = 'green'
+            else:
+                color = 'blue'
+            plt.scatter(ac.x, ac.y, marker="o", color=color, s=12)
+            arrow_len = ac.v * 10
             plt.arrow(
                 ac.x, ac.y,
                 np.cos(ac.heading) * arrow_len,
