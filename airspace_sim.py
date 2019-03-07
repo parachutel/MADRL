@@ -11,7 +11,7 @@ import tensorflow as tf
 import numpy as np
 
 # data_file_path = './rllab/data/test/itr_399_Mar5_work_for_circle.pkl' # 399 Mar 5 works for circle
-data_file_path = './rllab/data/test/itr_99.pkl'
+data_file_path = './rllab/data/test/itr_75.pkl'
 
 tf.reset_default_graph()
 with tf.Session() as sess:

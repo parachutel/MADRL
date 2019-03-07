@@ -46,7 +46,7 @@ MAX_TURN_RATE = np.deg2rad(10) # approx. 0.1745 rad/s
 DT = 1 # in s
 MAX_TIME_STEPS = 500 # in s
 # TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
-TRAINING_SCENARIOS = ['circle', 'square']
+TRAINING_SCENARIOS = ['square']
 
 # For training scenario: on circle
 MIN_CIRCLE_RADIUS = 2000 # in m 
@@ -352,7 +352,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
                 if self.aircraft[i].arrival():
                     del self.aircraft[i]
                     self.aircraft.insert(i, Aircraft(self))
-        else: # Un-usable
+        else:
             i = 0
             while i < len(self.aircraft):
                 if self.aircraft[i].arrival():
