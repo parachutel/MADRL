@@ -15,6 +15,8 @@ ENV_OPTIONS = [
     ('rew_closing', float, 0.08, ''),
     ('rew_nmac', float, -15.0, ''),
     ('rew_large_turnrate', float, -0.1, ''),
+    ('rew_large_acc', float, -0.05, ''),
+    ('pen_action_heavy', bool, False, ''),
     ('buffer_size', int, 1, ''),
     ('one_hot', int, 0, ''),
     ('curriculum', str, None, ''),
@@ -34,6 +36,8 @@ def main(parser):
                       rew_closing=args.rew_closing, 
                       rew_nmac=args.rew_nmac, 
                       rew_large_turnrate=args.rew_large_turnrate, 
+                      rew_large_acc=args.rew_large_acc,
+                      pen_action_heavy=args.pen_action_heavy,
                       one_hot=bool(args.one_hot))
 
     env = MultiAircraftEnv(**env_config)

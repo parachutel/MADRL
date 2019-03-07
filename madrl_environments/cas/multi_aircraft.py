@@ -223,23 +223,22 @@ class Aircraft(Agent):
         if self.nmac():
             reward += self.env.rew_nmac
 
-        # Reward weights scaled on normalized actions:
-        # Heavy pen on actions:  
-        if np.abs(actions[ACTION_IND_TURN]) > 1:
-            reward += 2 * self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN]) # heavy penality on exceeding bound
-        elif np.abs(actions[ACTION_IND_TURN]) > 0.7 and np.abs(actions[ACTION_IND_TURN]) < 1:
-            reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
-
-        if np.abs(actions[ACTION_IND_ACC]) > 1:
-            reward += 2 * self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC]) # heavy penality on exceeding bound
-        elif np.abs(actions[ACTION_IND_ACC]) > 0.7 and np.abs(actions[ACTION_IND_ACC]) < 1:
-            reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
-
-        # Low pen on actions:
-        # if np.abs(actions[ACTION_IND_ACC]) > 0.8:
-        #     reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
-        # if np.abs(actions[ACTION_IND_TURN]) > 0.7:
-        #     reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
+        # Following reward weights scaled on normalized actions:
+        if self.env.pen_action_heavy:  
+            if np.abs(actions[ACTION_IND_TURN]) > 1:
+                reward += 2 * self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN]) # heavy penality on exceeding bound
+            elif np.abs(actions[ACTION_IND_TURN]) > 0.7 and np.abs(actions[ACTION_IND_TURN]) < 1:
+                reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
+    
+            if np.abs(actions[ACTION_IND_ACC]) > 1:
+                reward += 2 * self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC]) # heavy penality on exceeding bound
+            elif np.abs(actions[ACTION_IND_ACC]) > 0.7 and np.abs(actions[ACTION_IND_ACC]) < 1:
+                reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
+        else:
+            if np.abs(actions[ACTION_IND_ACC]) > 0.8:
+                reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
+            if np.abs(actions[ACTION_IND_TURN]) > 0.7:
+                reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
 
         return reward
 
@@ -278,12 +277,14 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
                  rew_closing=2.5,
                  rew_nmac=-15,
                  rew_large_turnrate=-0.1,
-                 rew_large_acc=-1):
+                 rew_large_acc=-1,
+                 pen_action_heavy=True):
 
         EzPickle.__init__(self, continuous_action_space, n_agents, constant_n_agents,
                  training_mode, sensor_mode,sensor_capacity, max_time_steps, one_hot,
                  render_option, speed_noise, position_noise, angle_noise, reward_mech,
-                 rew_arrival, rew_closing, rew_nmac, rew_large_turnrate, rew_large_acc)
+                 rew_arrival, rew_closing, rew_nmac, rew_large_turnrate, rew_large_acc,
+                 pen_action_heavy)
 
         self.t = 0
         self.aircraft = []
@@ -308,6 +309,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         self.rew_nmac = rew_nmac
         self.rew_large_turnrate = rew_large_turnrate
         self.rew_large_acc = rew_large_acc
+        self.pen_action_heavy = pen_action_heavy
         self.seed()
 
     def get_param_values(self):

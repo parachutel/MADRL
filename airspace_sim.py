@@ -10,13 +10,14 @@ import joblib
 import tensorflow as tf
 import numpy as np
 
-data_file_path = './rllab/data/test/itr_399.pkl' # 399 Mar 5 works for circle
+# data_file_path = './rllab/data/test/itr_399_Mar5_work_for_circle.pkl' # 399 Mar 5 works for circle
+data_file_path = './rllab/data/test/itr_99.pkl'
 
 tf.reset_default_graph()
 with tf.Session() as sess:
 	data = joblib.load(data_file_path)
 	policy = data['policy']
-	env = MultiAircraftEnv(n_agents=40, render_option=True)
+	env = MultiAircraftEnv(n_agents=5, render_option=True)
 	env.reset()
 
 	done = False
