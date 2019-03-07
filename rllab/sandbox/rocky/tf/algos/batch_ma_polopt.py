@@ -134,8 +134,8 @@ class BatchMAPolopt(RLAlgorithm):
             start_itr = self.start_itr
             end_itr = self.n_itr
             # while True:
-            schedule = {'i_curr' : [0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7],
-                        'iter' : [50, 50, 100, 100, 100, 200, 200, 200, 50, 50, 100, 100, 100, 200, 200, 200, 50, 50, 100, 100, 100, 400, 400, 400]}
+            schedule = {'i_curr' : [0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7],
+                        'iter' : [100, 100, 100, 100, 200, 200, 300, 300, 100, 100, 100, 100, 200, 200, 300, 300]}
             i_counter = 0
             i_schedule = 0
             while i_schedule < len(schedule['i_curr']):
