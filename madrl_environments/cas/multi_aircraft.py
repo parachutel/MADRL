@@ -240,10 +240,6 @@ class Aircraft(Agent):
             if np.abs(actions[ACTION_IND_TURN]) > 0.7:
                 reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
 
-        if self.dist_to_dest < 0.1 * self.init_dist_to_dest and \
-            self.v < 0.02 * MAX_V: # anti-stop when closing to dest
-            reward -= self.env.rew_closing * self.dist_to_dest
-
         return reward
 
     @property
@@ -395,7 +391,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
 
         # Check if episode is done
         # done = (self.t > self.max_time_steps or all([ac.arrival() for ac in self.aircraft])) # works
-        done = (self.t > self.max_time_steps)
+        done = (self.t > self.max_time_steps) # provide a homogenious reward dist. for all agents
 
         # Increment time step
         self.t += 1
