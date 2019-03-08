@@ -31,7 +31,7 @@ OWN_OBS_DIM = 4
 PAIR_OBS_DIM = 4
 TERM_PAIRWISE_OBS = [1] * PAIR_OBS_DIM
 
-# Agent continuous dynamics properties
+# Agent continuous dynamics properties:
 ACTION_IND_ACC = 0
 ACTION_IND_TURN = 1
 ACTION_DIM = 2
@@ -42,11 +42,17 @@ MAX_ACC = 5 # in m/s^2
 MIN_TURN_RATE = 0 # in rad/s
 MAX_TURN_RATE = np.deg2rad(10) # approx. 0.1745 rad/s
 
+# Agent discrete dynamics properties:
+DISC_ACC = [-5, -2.5, 0, 2.5, 5]
+DISC_TURN_RATE = np.deg2rad([-10, -5, 0, 5, 10])
+DISC_ACTION_DIM = len(DISC_ACC) * len(DISC_TURN_RATE)
+DISC_ZERO_ACTIONS_IND = 12
+
 # Training settings
 DT = 1 # in s
 MAX_TIME_STEPS = 400 # in s
-# TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
-TRAINING_SCENARIOS = ['circle','square']
+TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
+# TRAINING_SCENARIOS = ['annulus']
 
 # For training scenario: on circle
 MIN_CIRCLE_RADIUS = 2000 # in m 
@@ -59,14 +65,19 @@ OUTTER_RADIUS = 4000 # in m
 # For training scenario: in square space
 AIRSPACE_WIDTH = 6000 # in m 
 
+# Ind to action helper:
+def idx2actions(idx):
+    assert idx < DISC_ACTION_DIM
+    i_acc = idx // DISC_ACC
+    i_turn = idx %  DISC_TURN_RATE
+    return (DISC_ACC[i_acc], DISC_TURN_RATE[i_turn])
 
-
-# Angle range helper
+# Angle range helper:
 # wrap an angle in (- pi, pi] 
 def norm_angle(angle):
     return (angle + pi) % (2 * pi) - pi
 
-# Agents sorting helpers
+# Agents sorting helpers:
 def agent_dist(a, b):
     return np.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
 
@@ -145,9 +156,13 @@ class Aircraft(Agent):
         return [seed]
 
     def apply_action(self, action):
-        # Entries of action vector in [-1, 1]
-        acc = MAX_ACC * np.clip(action[ACTION_IND_ACC], -1, 1)
-        self.turn_rate = MAX_TURN_RATE * np.clip(action[ACTION_IND_TURN], -1, 1)
+        if self.env.continuous_action_space:
+            # Entries of action vector in [-1, 1]
+            acc = MAX_ACC * np.clip(action[ACTION_IND_ACC], -1, 1)
+            self.turn_rate = MAX_TURN_RATE * np.clip(action[ACTION_IND_TURN], -1, 1)
+        else:
+            acc, self.turn_rate = idx2actions(action) # action is an idx in discrete domain
+
         self.v = np.clip(self.v + acc * DT, MIN_V, MAX_V)
         self.heading = norm_angle(self.heading + self.turn_rate * DT)
         # Update coordinates
@@ -224,21 +239,22 @@ class Aircraft(Agent):
             reward += self.env.rew_nmac
 
         # Following reward weights scaled on normalized actions:
-        if self.env.pen_action_heavy:  
-            if np.abs(actions[ACTION_IND_TURN]) > 1:
-                reward += 2 * self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN]) # heavy penality on exceeding bound
-            elif np.abs(actions[ACTION_IND_TURN]) > 0.7 and np.abs(actions[ACTION_IND_TURN]) < 1:
-                reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
-    
-            if np.abs(actions[ACTION_IND_ACC]) > 1:
-                reward += 2 * self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC]) # heavy penality on exceeding bound
-            elif np.abs(actions[ACTION_IND_ACC]) > 0.7 and np.abs(actions[ACTION_IND_ACC]) < 1:
-                reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
-        else:
-            if np.abs(actions[ACTION_IND_ACC]) > 0.8:
-                reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
-            if np.abs(actions[ACTION_IND_TURN]) > 0.7:
-                reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
+        if self.env.continuous_action_space:
+            if self.env.pen_action_heavy:  
+                if np.abs(actions[ACTION_IND_TURN]) > 1:
+                    reward += 2 * self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN]) # heavy penality on exceeding bound
+                elif np.abs(actions[ACTION_IND_TURN]) > 0.7 and np.abs(actions[ACTION_IND_TURN]) < 1:
+                    reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
+        
+                if np.abs(actions[ACTION_IND_ACC]) > 1:
+                    reward += 2 * self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC]) # heavy penality on exceeding bound
+                elif np.abs(actions[ACTION_IND_ACC]) > 0.7 and np.abs(actions[ACTION_IND_ACC]) < 1:
+                    reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
+            else:
+                if np.abs(actions[ACTION_IND_ACC]) > 0.8:
+                    reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
+                if np.abs(actions[ACTION_IND_TURN]) > 0.7:
+                    reward += self.env.rew_large_turnrate * np.abs(actions[ACTION_IND_TURN])
 
         return reward
 
@@ -250,10 +266,10 @@ class Aircraft(Agent):
 
     @property
     def action_space(self):
-        # if self.env.continuous_action_space:
-        return spaces.Box(low=-1, high=1, shape=(ACTION_DIM,))
-        # else:
-        #     pass # TODO
+        if self.env.continuous_action_space:
+            return spaces.Box(low=-1, high=1, shape=(ACTION_DIM,))
+        else:
+            return spaces.Discrete(DISC_ACTION_DIM)
 
 
 # Environment definition
@@ -344,7 +360,10 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
             self.aircraft.append(Aircraft(self)) # Create ref links
 
         # Return an obs with zero actions
-        return self.step(np.array([0, 0] * self.n_agents))[0]
+        if self.continuous_action_space :
+            return self.step(np.array([0, 0] * self.n_agents))[0]
+        else:
+            return self.step(np.array([DISC_ZERO_ACTIONS_IND] * self.n_agents))[0]
 
     def n_agents_control(self):
         if self.constant_n_agents:
@@ -366,7 +385,11 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         rewards = np.zeros(self.n_agents)
 
         # Apply actions and update dynamics
-        act_vec = np.reshape(actions, (self.n_agents, ACTION_DIM))
+        if self.continuous_action_space:
+            act_vec = np.reshape(actions, (self.n_agents, ACTION_DIM))
+        else:
+            act_vec = np.reshape(actions, (self.n_agents,))
+
         for i in range(self.n_agents):
             self.aircraft[i].apply_action(act_vec[i])
 
