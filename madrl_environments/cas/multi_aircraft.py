@@ -50,7 +50,7 @@ DISC_ZERO_ACTIONS_IND = 12
 
 # Training settings
 DT = 1 # in s
-MAX_TIME_STEPS = 400 # in s
+MAX_TIME_STEPS = 300 # in s
 TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
 # TRAINING_SCENARIOS = ['annulus']
 
