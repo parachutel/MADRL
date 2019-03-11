@@ -68,8 +68,8 @@ AIRSPACE_WIDTH = 6000 # in m
 # Ind to action helper:
 def idx2actions(idx):
     assert idx < DISC_ACTION_DIM
-    i_acc = idx // DISC_ACC
-    i_turn = idx %  DISC_TURN_RATE
+    i_acc = idx // len(DISC_ACC)
+    i_turn = idx %  len(DISC_TURN_RATE)
     return (DISC_ACC[i_acc], DISC_TURN_RATE[i_turn])
 
 # Angle range helper:
@@ -326,6 +326,14 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         self.rew_large_turnrate = rew_large_turnrate
         self.rew_large_acc = rew_large_acc
         self.pen_action_heavy = pen_action_heavy
+
+        self.observation_space = \
+            spaces.Box(low=-1, high=1, shape=(OWN_OBS_DIM + PAIR_OBS_DIM * self.sensor_capacity, ))
+        if self.continuous_action_space:
+            self.action_space = spaces.Box(low=-1, high=1, shape=(ACTION_DIM,))
+        else:
+            self.action_space = spaces.Discrete(DISC_ACTION_DIM)
+
         self.seed()
 
     def get_param_values(self):
@@ -388,6 +396,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         if self.continuous_action_space:
             act_vec = np.reshape(actions, (self.n_agents, ACTION_DIM))
         else:
+            # print('actions: {}'.format(np.reshape(actions, (self.n_agents,))))
             act_vec = np.reshape(actions, (self.n_agents,))
 
         for i in range(self.n_agents):
