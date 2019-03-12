@@ -13,7 +13,7 @@ python3 ../runners/run_multiaircraft.py rllab \
     --pen_action_heavy True \
     --rew_arrival 2.0 \
     --rew_closing 0.05 \
-    --rew_nmac -100.0 \
+    --rew_nmac -50.0 \
     --rew_large_turnrate -0.05 \
     --rew_large_acc -0.05 \
     --curriculum ../lessons/cas/env.yaml
