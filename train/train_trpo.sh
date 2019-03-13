@@ -1,6 +1,6 @@
 export PYTHONPATH=$(pwd)/..:$(pwd)/../rltools:$(pwd)/../rllab:$PYTHONPATH
 python3 ../runners/run_multiaircraft.py rllab \
-    --exp_name trpo_full_curr_3_passes_ALL_ENV_Tmax_300_PEN_HEAVY_True_rew_nmac_-150_rew_arr_2\
+    --exp_name trpo_20_agent_direct_ALL_ENV_Tmax_300_PEN_HEAVY_True_rew_nmac_-150_rew_arr_2\
 	--algo tftrpo \
     --step_size 0.01 \
     --discount 0.99 \
