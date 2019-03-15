@@ -7,19 +7,6 @@ python3  -W ignore ../runners/train_dqn_disc_multi_aircraft.py \
     --max_experience_size 20000 \
     --traj_sim_len 300 \
     --n_eval_traj 2 \
-    --n_agents  5 \
+    --n_agents  15 \
     --save_freq 5000 \
-    --log_file_name default \
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    --log_file_name dqn_train_log_n_15
