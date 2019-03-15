@@ -246,7 +246,7 @@ def evaluate(env, obsfeat_fn, action_fn, max_traj_len, n_traj):
         for itr in range(max_traj_len):
             # a = action_fn(obsfeat_fn(np.expand_dims(o,0)))
             a = action_fn(obsfeat_fn(o))
-            o, r, done, _ = env.step(a)  # XXX
+            o, r, done, _ = env.step(a)
             rtot += np.mean(r)
             if done:
                 break

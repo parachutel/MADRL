@@ -35,6 +35,14 @@ def main():
     parser.add_argument('--n_eval_traj', type=int, default=2)
     parser.add_argument('--n_agents', type=int, default=5)
 
+    parser.add_argument('--reward_mech', type=str, default='local')
+    parser.add_argument('--rew_arrival', type=float, default=2)
+    parser.add_argument('--rew_closing', type=float, default=0.05)
+    parser.add_argument('--rew_nmac', type=float, default=-150)
+    parser.add_argument('--rew_large_turnrate', type=float, default=-0.05)
+    parser.add_argument('--rew_large_acc', type=float, default=-0.05)
+
+
     parser.add_argument('--save_freq', type=int, default=5000)
     parser.add_argument('--log_file_name', type=str, default='default')
 
@@ -43,7 +51,14 @@ def main():
 
     args = parser.parse_args()
 
-    env = MultiAircraftEnv(n_agents=args.n_agents, continuous_action_space=False)
+    env = MultiAircraftEnv(n_agents=args.n_agents, 
+                            continuous_action_space=False,
+                            reward_mech=args.reward_mech, 
+                            rew_arrival=args.rew_arrival, 
+                            rew_closing=args.rew_closing, 
+                            rew_nmac=args.rew_nmac, 
+                            rew_large_turnrate=args.rew_large_turnrate, 
+                            rew_large_acc=args.rew_large_acc,)
 
 
     q_func = CategoricalQFunction(env.observation_space, env.action_space,
