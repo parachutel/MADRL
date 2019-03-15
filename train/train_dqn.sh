@@ -1,16 +1,25 @@
 export PYTHONPATH=$(pwd)/..:$(pwd)/../rltools:$(pwd)/../rllab:$PYTHONPATH
-python3  -W ignore ../runners/train_dqn_disc_multi_aircraft.py
-    # --step_size 0.01 \
-    # --discount 0.99 \
-    # --control decentralized \
-    # --sampler simple \
-    # --policy_hidden 100,50,50 \
-    # --n_iter 1 \
-    # --n_agents 15 \
-    # --batch_size 30000 \
-    # --max_path_length 1000 \
-    # --rew_arrival 15.0 \
-    # --rew_closing 0.05 \
-    # --rew_nmac -15.0 \
-    # --rew_large_turnrate -0.1 \
-    # --curriculum lessons/cas/env.yaml
+python3  -W ignore ../runners/train_dqn_disc_multi_aircraft.py \
+    --n_iter 4000000 \
+    --target_update_step 5000 \
+    --batch_size default=64 \
+    --discount 0.99 \
+    --max_experience_size 20000 \
+    --traj_sim_len 300 \
+    --n_eval_traj 2 \
+    --n_agents  5 \
+    --save_freq 5000 \
+    --log_file_name default \
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
