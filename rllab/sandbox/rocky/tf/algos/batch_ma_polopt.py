@@ -133,30 +133,30 @@ class BatchMAPolopt(RLAlgorithm):
             start_time = time.time()
             start_itr = self.start_itr
             end_itr = self.n_itr
-            while True:
-            # schedule = {'i_curr' : [0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7],
-            #             'iter' : [100, 100, 100, 100, 200, 200, 300, 300, 100, 100, 100, 100, 200, 200, 300, 300, 100, 100, 100, 100, 200, 200, 300, 300]} # curriculum
+            # while True:
+            schedule = {'i_curr' : [0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7],
+                        'iter' : [100, 100, 100, 100, 200, 200, 300, 300, 100, 100, 100, 100, 200, 200, 300, 300, 100, 100, 100, 100, 200, 200, 300, 300]} # curriculum
             # schedule = {'i_curr' : [5],
             #             'iter' : [sum([100, 100, 100, 100, 200, 200, 300, 300, 100, 100, 100, 100, 200, 200, 300, 300])]} # direct
             # schedule = {'i_curr' : [0, 1, 2],
             #             'iter' : [300, 600, 600]}
-                i_counter = 0
-                # i_schedule = 0
-                # while i_schedule < len(schedule['i_curr']):
-                #     task = curriculum.tasks[schedule['i_curr'][i_schedule]]
-                #     logger.log("Lesson: number of agents = {}".format(task.prop))
-                for ctrial in range(curriculum.n_trials):
-                    # for ctrial in range(schedule['iter'][i_schedule]):
-                    task_prob = np.random.dirichlet(task_dist)
-                    task = np.random.choice(curriculum.tasks, p=task_prob)
-                    logger.log("Lesson: number of agents = {}".format(task.prop))
+            i_counter = 0
+            i_schedule = 0
+            while i_schedule < len(schedule['i_curr']):
+                task = curriculum.tasks[schedule['i_curr'][i_schedule]]
+                logger.log("Lesson: number of agents = {}".format(task.prop))
+                # for ctrial in range(curriculum.n_trials):
+                for ctrial in range(schedule['iter'][i_schedule]):
+                # task_prob = np.random.dirichlet(task_dist)
+                # task = np.random.choice(curriculum.tasks, p=task_prob)
+                # logger.log("Lesson: number of agents = {}".format(task.prop))
                     self.env.set_param_values(task.prop)
                     self.start_worker()
-                    for itr in range(start_itr, end_itr):
-                    # for itr in range(schedule['iter'][i_schedule]):
+                    # for itr in range(start_itr, end_itr):
+                    for itr in range(schedule['iter'][i_schedule]):
                         itr_start_time = time.time()
-                        with logger.prefix('curr_trial: #%d itr #%d |' % (ctrial, itr)):
-                        # with logger.prefix('curr: #%d itr #%d |' % (schedule['i_curr'][i_schedule], i_counter)):
+                        # with logger.prefix('curr_trial: #%d itr #%d |' % (ctrial, itr)):
+                        with logger.prefix('curr: #%d itr #%d |' % (schedule['i_curr'][i_schedule], i_counter)):
                             i_counter += 1
                             logger.log("Obtaining samples...")
                             paths = self.obtain_samples(itr)
@@ -194,7 +194,7 @@ class BatchMAPolopt(RLAlgorithm):
                     task_eval_reward[task] += np.mean(evres[curriculum.metric])
                     task_counts[task] += 1
     
-                    # i_schedule += 1
+                    i_schedule += 1
     
                     # Check how we have progressed
                     scores = []
@@ -215,8 +215,8 @@ class BatchMAPolopt(RLAlgorithm):
                     if rel_reward > curriculum.lesson_threshold:
                         logger.log("task: {} breached, reward: {}!".format(np.argmax(task_dist), rel_reward))
                         task_dist = np.roll(task_dist, 1) # update distribution
-                    if min_reward > curriculum.stop_threshold or i_counter > 4500:
-                        break
+                    # if min_reward > curriculum.stop_threshold or i_counter > 4500:
+                    #     break
 
         self.shutdown_worker()
 
