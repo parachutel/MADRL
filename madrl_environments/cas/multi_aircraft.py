@@ -3,6 +3,7 @@ import math
 from math import pi
 import sys
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 from matplotlib import animation
 
 import gym
@@ -248,7 +249,7 @@ class Aircraft(Agent):
         
                 if np.abs(actions[ACTION_IND_ACC]) > 1:
                     reward += 2 * self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC]) # heavy penality on exceeding bound
-                elif np.abs(actions[ACTION_IND_ACC]) > 0.7 and np.abs(actions[ACTION_IND_ACC]) < 1:
+                elif np.abs(actions[ACTION_IND_ACC]) > 0.8 and np.abs(actions[ACTION_IND_ACC]) < 1:
                     reward += self.env.rew_large_acc * np.abs(actions[ACTION_IND_ACC])
             else:
                 if np.abs(actions[ACTION_IND_ACC]) > 0.8:
@@ -433,6 +434,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         return obs, [rewards.mean()] * self.n_agents, done, {} # Globally averaged rew
 
     def render(self):
+        rcParams["figure.figsize"] = [3, 3]
         for ac in self.aircraft:
             if ac.arrival():
                 color = 'green'
@@ -475,11 +477,18 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
             plt.xlim((-OUTTER_RADIUS * 1.2, OUTTER_RADIUS * 1.2))
             plt.ylim((-OUTTER_RADIUS * 1.2, OUTTER_RADIUS * 1.2))
 
-        plt.xlabel("x (m)")
-        plt.ylabel("y (m)")
-        plt.title(str(self.t) + ': ' + str(len(self.aircraft)))
+        plt.gca().axes.get_xaxis().set_ticks([])
+        plt.gca().axes.get_yaxis().set_ticks([])
+
+        
+
+        # plt.xlabel("x (m)")
+        # plt.ylabel("y (m)")
+        # plt.title('t = ' + str(self.t) + ', Num Agents = ' + str(len(self.aircraft)))
         plt.axis("equal")
         plt.draw()
+        if self.t == 50:
+            plt.savefig(self.training_mode + '_t_' + str(self.t) + '_n_' + str(len(self.aircraft)) + '.pdf', bbox_inches='tight', pad_inches=0)
         plt.pause(0.0001)
         plt.clf()
 
