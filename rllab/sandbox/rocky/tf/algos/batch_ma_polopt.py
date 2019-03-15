@@ -204,8 +204,8 @@ class BatchMAPolopt(RLAlgorithm):
                             logger.log("task #{} {}".format(i, score))
                             scores.append(score)
                         else:
-                            scores.append(min(scores))
-                            # scores.append(-np.inf)
+                            # scores.append(min(scores))
+                            scores.append(-np.inf)
     
                     logger.log('Eval scores = {}'.format(scores))
                     min_reward = min(min_reward, min(scores))
