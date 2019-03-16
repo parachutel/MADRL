@@ -146,77 +146,77 @@ class BatchMAPolopt(RLAlgorithm):
                 task = curriculum.tasks[schedule['i_curr'][i_schedule]]
                 logger.log("Lesson: number of agents = {}".format(task.prop))
                 # for ctrial in range(curriculum.n_trials):
-                for ctrial in range(schedule['iter'][i_schedule]):
+                # for ctrial in range(schedule['iter'][i_schedule]):
                 # task_prob = np.random.dirichlet(task_dist)
                 # task = np.random.choice(curriculum.tasks, p=task_prob)
                 # logger.log("Lesson: number of agents = {}".format(task.prop))
-                    self.env.set_param_values(task.prop)
-                    self.start_worker()
-                    # for itr in range(start_itr, end_itr):
-                    for itr in range(schedule['iter'][i_schedule]):
-                        itr_start_time = time.time()
-                        # with logger.prefix('curr_trial: #%d itr #%d |' % (ctrial, itr)):
-                        with logger.prefix('curr: #%d itr #%d |' % (schedule['i_curr'][i_schedule], i_counter)):
-                            i_counter += 1
-                            logger.log("Obtaining samples...")
-                            paths = self.obtain_samples(itr)
-                            # print('number of ma_paths = {}'.format(len(paths)))
-                            logger.log("Processing samples...")
-                            # TODO Process appropriately for concurrent or decentralized
-                            samples_data = self.process_samples(itr, paths)
-                            logger.log("Logging diagnostics...")
-                            self.log_diagnostics(paths)
-                            logger.log("Optimizing policy...")
-                            self.optimize_policy(itr, samples_data)
-                            logger.log("Saving snapshot...")
-                            params = self.get_itr_snapshot(itr, samples_data)  # , **kwargs)
-                            if self.store_paths:
-                                if isinstance(samples_data, list):
-                                    params["paths"] = [sd["paths"] for sd in samples_data]
-                                else:
-                                    params["paths"] = samples_data["paths"]
-                            logger.save_itr_params(itr, params)
-                            logger.log("Saved")
-                            logger.record_tabular('Time', time.time() - start_time)
-                            logger.record_tabular('ItrTime', time.time() - itr_start_time)
-                            logger.dump_tabular(with_prefix=False)
-                            if self.plot:
-                                self.update_plot()
-                                if self.pause_for_plot:
-                                    input("Plotting evaluation run: Press Enter to " "continue...")
-    
-                    start_itr = end_itr
-                    end_itr += self.n_itr
-                    logger.log("Evaluating...")
-                    evres = evaluate(self.env, self.policy, max_path_length=self.max_path_length,
-                                     n_paths=curriculum.eval_trials, ma_mode=self.ma_mode,
-                                     disc=self.discount)
-                    task_eval_reward[task] += np.mean(evres[curriculum.metric])
-                    task_counts[task] += 1
-    
-                    i_schedule += 1
-    
-                    # Check how we have progressed
-                    scores = []
-                    for i, task in enumerate(curriculum.tasks):
-                        if task_counts[task] > 0:
-                            score = 1.0 * task_eval_reward[task] / task_counts[task]
-                            logger.log("task #{} {}".format(i, score))
-                            scores.append(score)
-                        else:
-                            # scores.append(min(scores))
-                            scores.append(-np.inf)
-    
-                    logger.log('Eval scores = {}'.format(scores))
-                    min_reward = min(min_reward, min(scores))
-                    rel_reward = scores[np.argmax(task_dist)]
-                    # print('min_reward = {}'.format(min_reward))
-                    # print('curriculum.stop_threshold = {}'.format(curriculum.stop_threshold))
-                    if rel_reward > curriculum.lesson_threshold:
-                        logger.log("task: {} breached, reward: {}!".format(np.argmax(task_dist), rel_reward))
-                        task_dist = np.roll(task_dist, 1) # update distribution
-                    # if min_reward > curriculum.stop_threshold or i_counter > 4500:
-                    #     break
+                self.env.set_param_values(task.prop)
+                self.start_worker()
+                # for itr in range(start_itr, end_itr):
+                for itr in range(schedule['iter'][i_schedule]):
+                    itr_start_time = time.time()
+                    # with logger.prefix('curr_trial: #%d itr #%d |' % (ctrial, itr)):
+                    with logger.prefix('curr: #%d itr #%d |' % (schedule['i_curr'][i_schedule], i_counter)):
+                        i_counter += 1
+                        logger.log("Obtaining samples...")
+                        paths = self.obtain_samples(itr)
+                        # print('number of ma_paths = {}'.format(len(paths)))
+                        logger.log("Processing samples...")
+                        # TODO Process appropriately for concurrent or decentralized
+                        samples_data = self.process_samples(itr, paths)
+                        logger.log("Logging diagnostics...")
+                        self.log_diagnostics(paths)
+                        logger.log("Optimizing policy...")
+                        self.optimize_policy(itr, samples_data)
+                        logger.log("Saving snapshot...")
+                        params = self.get_itr_snapshot(itr, samples_data)  # , **kwargs)
+                        if self.store_paths:
+                            if isinstance(samples_data, list):
+                                params["paths"] = [sd["paths"] for sd in samples_data]
+                            else:
+                                params["paths"] = samples_data["paths"]
+                        logger.save_itr_params(itr, params)
+                        logger.log("Saved")
+                        logger.record_tabular('Time', time.time() - start_time)
+                        logger.record_tabular('ItrTime', time.time() - itr_start_time)
+                        logger.dump_tabular(with_prefix=False)
+                        if self.plot:
+                            self.update_plot()
+                            if self.pause_for_plot:
+                                input("Plotting evaluation run: Press Enter to " "continue...")
+
+                start_itr = end_itr
+                end_itr += self.n_itr
+                logger.log("Evaluating...")
+                evres = evaluate(self.env, self.policy, max_path_length=self.max_path_length,
+                                 n_paths=curriculum.eval_trials, ma_mode=self.ma_mode,
+                                 disc=self.discount)
+                task_eval_reward[task] += np.mean(evres[curriculum.metric])
+                task_counts[task] += 1
+
+                i_schedule += 1
+
+                # Check how we have progressed
+                scores = []
+                for i, task in enumerate(curriculum.tasks):
+                    if task_counts[task] > 0:
+                        score = 1.0 * task_eval_reward[task] / task_counts[task]
+                        logger.log("task #{} {}".format(i, score))
+                        scores.append(score)
+                    else:
+                        # scores.append(min(scores))
+                        scores.append(-np.inf)
+
+                logger.log('Eval scores = {}'.format(scores))
+                min_reward = min(min_reward, min(scores))
+                rel_reward = scores[np.argmax(task_dist)]
+                # print('min_reward = {}'.format(min_reward))
+                # print('curriculum.stop_threshold = {}'.format(curriculum.stop_threshold))
+                if rel_reward > curriculum.lesson_threshold:
+                    logger.log("task: {} breached, reward: {}!".format(np.argmax(task_dist), rel_reward))
+                    task_dist = np.roll(task_dist, 1) # update distribution
+                # if min_reward > curriculum.stop_threshold or i_counter > 4500:
+                #     break
 
         self.shutdown_worker()
 
