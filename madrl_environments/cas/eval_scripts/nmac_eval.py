@@ -19,7 +19,8 @@ def main():
     parser.add_argument('--policy_file', type=str, default='')
     parser.add_argument('--n_agents', type=int, default=10)
     parser.add_argument('--render', type=bool, default=False)
-    parser.add_argument('--eval_time_steps', type=int, default=500)
+    parser.add_argument('--eval_time_steps', type=int, default=300)
+    parser.add_argument('--verbose', type=bool, default=False)
     args = parser.parse_args()
 
     print('Evaluating policy: {}'.format(args.policy_file))
@@ -33,7 +34,7 @@ def main():
             policy = policy_file_data['policy']
 
         env = MultiAircraftEnv(n_agents=args.n_agents, 
-                                render_option=args.render,
+                                render_option=False,
                                 constant_n_agents=True)
         nmac_per_time_step_per_ac = []
         for i_eval in range(args.n_eval):
@@ -53,13 +54,15 @@ def main():
                         actions.append([0] * ACTION_DIM)
                 
                 env.step(np.array(actions))
-                env.n_agents_control()
+                # env.n_agents_control()
                 t += 1
-    
+            
             nmac_per_time_step_per_ac.append(nmac_count / 2 / args.eval_time_steps / args.n_agents)
-            print('Eval #{}, NMAC per time step per agent = {}'.format(i_eval+1, nmac_per_time_step_per_ac[-1]))
+            if args.verbose:
+                print('Eval #{}, NMAC per time step per agent = {}'.format(i_eval+1, nmac_per_time_step_per_ac[-1]))
 
-        print('Evals end, NMAC per time step per agent = {}'.format(np.mean(nmac_per_time_step_per_ac)))
+        print('Evals end. NMAC per time step per agent = %3.2f $\\pm$ %3.2f x 10^3' % (np.mean(nmac_per_time_step_per_ac) * 1000, 
+                np.std(nmac_per_time_step_per_ac) / np.sqrt(args.n_eval) * 1000))
 
 if __name__ == '__main__':
     main()

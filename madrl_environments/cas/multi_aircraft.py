@@ -56,8 +56,10 @@ TRAINING_SCENARIOS = ['circle', 'annulus', 'square']
 # TRAINING_SCENARIOS = ['annulus']
 
 # For training scenario: on circle
-MIN_CIRCLE_RADIUS = 2000 # in m 
-MAX_CIRCLE_RADIUS = 2001 # in m 
+MIN_CIRCLE_RADIUS = 3000 # in m 
+MAX_CIRCLE_RADIUS = 3001 # in m 
+# MIN_CIRCLE_RADIUS = 6000 # in m, for traj viz
+# MAX_CIRCLE_RADIUS = 6001 # in m, for traj viz
 
 # For training scenario: in annulus
 INNER_RADIUS = 2000 # in m 
@@ -65,6 +67,7 @@ OUTTER_RADIUS = 4000 # in m
 
 # For training scenario: in square space
 AIRSPACE_WIDTH = 6000 # in m 
+# AIRSPACE_WIDTH = 8000 # in m, for traj viz
 
 # Ind to action helper:
 def idx2actions(idx):
@@ -295,13 +298,14 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
                  rew_nmac=-15,
                  rew_large_turnrate=-0.1,
                  rew_large_acc=-1,
-                 pen_action_heavy=True):
+                 pen_action_heavy=True,
+                 random_mode=True):
 
         EzPickle.__init__(self, continuous_action_space, n_agents, constant_n_agents,
                  training_mode, sensor_mode,sensor_capacity, max_time_steps, one_hot,
                  render_option, speed_noise, position_noise, angle_noise, reward_mech,
                  rew_arrival, rew_closing, rew_nmac, rew_large_turnrate, rew_large_acc,
-                 pen_action_heavy)
+                 pen_action_heavy, random_mode)
 
         self.t = 0
         self.aircraft = []
@@ -327,6 +331,7 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         self.rew_large_turnrate = rew_large_turnrate
         self.rew_large_acc = rew_large_acc
         self.pen_action_heavy = pen_action_heavy
+        self.random_mode = random_mode
 
         self.observation_space = \
             spaces.Box(low=-1, high=1, shape=(OWN_OBS_DIM + PAIR_OBS_DIM * self.sensor_capacity, ))
@@ -361,7 +366,9 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         self.t = 0
         self.aircraft = []
 
-        self.training_mode = random.choice(TRAINING_SCENARIOS)
+        if self.random_mode:
+            self.training_mode = random.choice(TRAINING_SCENARIOS)
+
         if self.training_mode == 'circle':
             self.circle_radius = random.choice(range(MIN_CIRCLE_RADIUS, MAX_CIRCLE_RADIUS))
 
@@ -487,8 +494,8 @@ class MultiAircraftEnv(AbstractMAEnv, EzPickle):
         # plt.title('t = ' + str(self.t) + ', Num Agents = ' + str(len(self.aircraft)))
         plt.axis("equal")
         plt.draw()
-        if self.t == 50:
-            plt.savefig(self.training_mode + '_t_' + str(self.t) + '_n_' + str(len(self.aircraft)) + '.pdf', bbox_inches='tight', pad_inches=0)
+        # if self.t == 50:
+        #     plt.savefig(self.training_mode + '_t_' + str(self.t) + '_n_' + str(len(self.aircraft)) + '.pdf', bbox_inches='tight', pad_inches=0)
         plt.pause(0.0001)
         plt.clf()
 

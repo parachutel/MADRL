@@ -2,6 +2,8 @@ import sys
 sys.path.append('./rllab')
 sys.path.append('./rltools')
 
+import argparse
+
 from madrl_environments.cas.multi_aircraft import *
 
 import matplotlib.pyplot as plt
@@ -10,21 +12,27 @@ import joblib
 import tensorflow as tf
 import numpy as np
 
-# data_file_path = './rllab/data/test/itr_399_Mar5_work_for_circle.pkl' # 399 Mar 5 works for circle
-data_file_path = './rllab/data/test/all_env/itr_2064_direct_real_good.pkl'
+parser = argparse.ArgumentParser()
 
-tf.reset_default_graph()
-with tf.Session() as sess:
-	data = joblib.load(data_file_path)
-	policy = data['policy']
-	env = MultiAircraftEnv(n_agents=15, render_option=True)
-	env.reset()
+def main():
+	parser.add_argument('--policy', type=str, default='trpo_full_curr_3_passes_ALL_ENV_Tmax_300_PEN_HEAVY_True_rew_nmac_-150_rew_arr_2_run_2/itr_299.pkl')
+	args = parser.parse_args()
 
-	done = False
-	while not done:
-		actions = []
-		for ac in env.aircraft:
-			obs = ac.get_observation()
-			_, action_info = policy.get_action(obs)
-			actions.append(action_info['mean'])
-		_, _, done, _ = env.step(np.array(actions))
+	tf.reset_default_graph()
+	with tf.Session() as sess:
+		data = joblib.load('./rllab/data/' + args.policy)
+		policy = data['policy']
+		env = MultiAircraftEnv(n_agents=15, render_option=True)
+		env.reset()
+	
+		done = False
+		while not done:
+			actions = []
+			for ac in env.aircraft:
+				obs = ac.get_observation()
+				_, action_info = policy.get_action(obs)
+				actions.append(action_info['mean'])
+			_, _, done, _ = env.step(np.array(actions))
+
+if __name__ == '__main__':
+    main()
