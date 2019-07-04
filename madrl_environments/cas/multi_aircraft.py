@@ -66,7 +66,7 @@ INNER_RADIUS = 2000 # in m
 OUTTER_RADIUS = 4000 # in m 
 
 # For training scenario: in square space
-AIRSPACE_WIDTH = 6000 # in m 
+AIRSPACE_WIDTH = 10000 # in m 
 # AIRSPACE_WIDTH = 8000 # in m, for traj viz
 
 # Ind to action helper:

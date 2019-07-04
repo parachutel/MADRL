@@ -13,18 +13,21 @@ from madrl_environments.cas.multi_aircraft import *
 from matplotlib import animation
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-rcParams["figure.figsize"] = [5, 5]
+rcParams["figure.figsize"] = [10, 10]
 
 
 def main():
-    n_frames = 350
     parser = argparse.ArgumentParser()
     parser.add_argument('--n_agents', type=int, default=15)
     parser.add_argument('--equally_spaced_circle', type=int, default=0) # overrides --mode
+    parser.add_argument('--constant_n_agents', type=int, default=1)
+    parser.add_argument('--takeoff_rate', type=int, default=50)
+    parser.add_argument('--sim_time_steps', type=int, default=350)
 
     parser.add_argument('--mode', type=str, default='circle')
     parser.add_argument('--policy', type=str, default='trpo_full_curr_3_passes_ALL_ENV_Tmax_300_PEN_HEAVY_True_rew_nmac_-150_rew_arr_2_run_2/itr_299.pkl')
     args = parser.parse_args()
+    n_frames = args.sim_time_steps
 
     args.equally_spaced_circle = bool(args.equally_spaced_circle)
 
@@ -43,7 +46,10 @@ def main():
         policy = data['policy']
 
         # env:
-        env = MultiAircraftEnv(n_agents=args.n_agents, random_mode=False, training_mode=args.mode)
+        env = MultiAircraftEnv(n_agents=args.n_agents, 
+                                random_mode=False, 
+                                training_mode=args.mode,
+                                constant_n_agents=bool(args.constant_n_agents))
         if args.equally_spaced_circle:
             # Manually reset:
             env.reset()
@@ -79,8 +85,14 @@ def main():
                 actions.append(action_info['mean'])
 
             if env.t % 50 == 0 or env.t == 1:
-                print('time step =', env.t)
+                print('time step =', env.t, ', n_agents = ', env.n_agents)
             env.step(np.array(actions))
+            if env.constant_n_agents == False:
+                env.n_agents_control()
+                n_new_ac = np.random.poisson(lam=args.takeoff_rate * 100 / 3600)
+                for _ in range(n_new_ac):
+                    env.aircraft.append(Aircraft(env))
+                    env.n_agents += 1
 
             # plot
             for ac in env.aircraft:
@@ -88,23 +100,23 @@ def main():
                     color = 'green'
                 else:
                     color = 'blue'
-                frame = plt.scatter(ac.x, ac.y, marker="o", color=color, s=12)
-                arrow_len = ac.v * 10
-                frame = plt.arrow(
-                    ac.x, ac.y,
-                    np.cos(ac.heading) * arrow_len,
-                    np.sin(ac.heading) * arrow_len,
-                    width=0.6,
-                    facecolor="black")
-                frame = plt.scatter(ac.dest_x, ac.dest_y, marker=",", color="magenta", s=12)
+                frame = plt.scatter(ac.x, ac.y, marker="o", color=color, s=6)
+                # arrow_len = ac.v * 7
+                # frame = plt.arrow(
+                #     ac.x, ac.y,
+                #     np.cos(ac.heading) * arrow_len,
+                #     np.sin(ac.heading) * arrow_len,
+                #     width=0.6,
+                #     facecolor="black")
+                frame = plt.scatter(ac.dest_x, ac.dest_y, marker=",", color="magenta", s=6)
                 frame = plt.plot([ac.x, ac.dest_x], [ac.y, ac.dest_y], 
                     linestyle="--", color="black", linewidth=0.3)
-                for i in range(env.sensor_capacity):
-                    if ac.obs[4 + i * 4] < 1:
-                        rho = ac.obs[4 + i * 4] * SENSING_RANGE
-                        phi = ac.heading + ac.obs[4 + i * 4 + 1] * pi
-                        frame = plt.plot([ac.x, ac.x + rho * np.cos(phi)], [ac.y, ac.y + rho * np.sin(phi)],
-                            linestyle="--", color="red", linewidth=0.3)
+                # for i in range(env.sensor_capacity):
+                #     if ac.obs[4 + i * 4] < 1:
+                #         rho = ac.obs[4 + i * 4] * SENSING_RANGE
+                #         phi = ac.heading + ac.obs[4 + i * 4 + 1] * pi
+                #         frame = plt.plot([ac.x, ac.x + rho * np.cos(phi)], [ac.y, ac.y + rho * np.sin(phi)],
+                #             linestyle="--", color="red", linewidth=0.3)
         
             if env.training_mode == 'circle':
                 th = np.linspace(-pi, pi, 30)
@@ -115,7 +127,8 @@ def main():
             elif env.training_mode == 'square':
                 frame = plt.gca().set_xlim(left=0, right=AIRSPACE_WIDTH)
                 frame = plt.gca().set_ylim(bottom=0, top=AIRSPACE_WIDTH)
-                frame = plt.gca().axis('equal')
+                # frame = plt.gca().axis('square')
+                # frame = plt.gca().set_aspect('equal')
             elif env.training_mode == 'annulus':
                 th = np.linspace(-pi, pi, 30)
                 frame = plt.plot(INNER_RADIUS * np.cos(th), INNER_RADIUS * np.sin(th), 
@@ -128,12 +141,14 @@ def main():
             frame = plt.xlabel("x (m)")
             frame = plt.ylabel("y (m)")
             frame = plt.title('t = ' + str(env.t) + ', Num Agents = ' + str(len(env.aircraft)))
-            frame = plt.axis("equal")
+            frame = plt.gca().set_aspect('equal')
+            # frame = plt.axis("square")
 
             return frame
         
         ani = animation.FuncAnimation(fig=fig, func=animate, frames=n_frames, interval=200, blit=False)
-        ani.save('animation_' + str(env.n_agents) + '_' + args.mode + '_' + os.path.split(args.policy)[0] + '.mp4', fps=24, extra_args=['-vcodec', 'libx264'])
+        ani.save('tekeoff_test_animation_' + str(env.n_agents) + '_' + args.mode + '_' + 
+            os.path.split(args.policy)[0] + '.mp4', fps=24, extra_args=['-vcodec', 'libx264'])
 
 if __name__ == '__main__':
     main()
