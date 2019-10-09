@@ -1,17 +1,20 @@
 name: rllab3
 channels:
-    - https://conda.anaconda.org/kne 
+    - kne
+    - jjhelmus
+    - menpo
+    - https://repo.anaconda.com/pkgs/free
+    - conda-forge
+    - defaults
     - https://conda.binstar.org/tlatorre 
     - https://conda.anaconda.org/cjs14
-    - https://conda.anaconda.org/menpo
-    - jjhelmus
 dependencies:
     - python==3.5.2
-    - numpy==1.10.4
+    - numpy==1.10.4 # hard requirement
     - scipy
     - path.py
     - python-dateutil
-    - joblib==0.9.4
+    - joblib=0.9.4
     - mako
     - ipywidgets
     - numba
@@ -22,7 +25,7 @@ dependencies:
     - matplotlib
     - opencv3=3.1.0
     - scikit-learn
-    - tensorflow=0.10.0rc0
+    - tensorflow==0.12.0rc0 # 0.10.0rc0 is too old to be provided
     - pip:
         - Pillow
         - atari-py
@@ -33,7 +36,7 @@ dependencies:
         - nose2
         - pyzmq
         - msgpack-python
-        - mujoco_py
+        # - mujoco_py
         - cached_property
         - line_profiler
         - Cython
@@ -41,7 +44,7 @@ dependencies:
         - git+https://github.com/neocxi/Lasagne.git@484866cf8b38d878e92d521be445968531646bb8#egg=Lasagne
         - git+https://github.com/plotly/plotly.py.git@2594076e29584ede2d09f2aa40a8a195b3f3fc66#egg=plotly
         - awscli
-        - git+https://github.com/openai/gym.git
+        - git+https://github.com/openai/gym.git@c17ac6cc55fda4be60548e2e05b54f22e83e2c1b#egg=gym # pin v0.7.3
         - pyglet
         - git+https://github.com/neocxi/prettytensor.git
         - jupyter
